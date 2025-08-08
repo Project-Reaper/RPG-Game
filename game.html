@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Swordigo Mage & Sword Master - Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      color: white;
+    }
+    #gameCanvas {
+      display: block;
+      margin: auto;
+      background: url('https://i.ibb.co/Gn58zK2/floating-islands-bg.png') repeat-x;
+      background-size: cover;
+    }
+    #stats {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      padding: 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+      box-shadow: 0 0 10px red;
+    }
+  </style>
+</head>
+<body>
+  <div id="stats">Loading stats...</div>
+  <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBF-h6Ka-jU8Cd3xpaHTT-UtNBO3aDQWZU",
+      authDomain: "rpg-game-ff3f9.firebaseapp.com",
+      databaseURL: "https://rpg-game-ff3f9-default-rtdb.firebaseio.com",
+      projectId: "rpg-game-ff3f9",
+      storageBucket: "rpg-game-ff3f9.firebasestorage.app",
+      messagingSenderId: "212932693152",
+      appId: "1:212932693152:web:dbdeef096a87a7c1de0dc5",
+      measurementId: "G-JLX6YH0YFY"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let player = {x: 50, y: 400, vx: 0, vy: 0, jumping: false, hp: 100, atk: 20};
+    let keys = {};
+
+    // Load player sprite
+    const playerImg = new Image();
+    playerImg.src = "https://i.ibb.co/w4cGZ2k/mage-swordmaster.png"; // Replace with better sprite
+
+    // Simple enemy
+    const enemyImg = new Image();
+    enemyImg.src = "https://i.ibb.co/2Kkm5cy/monster.png";
+
+    let enemies = [{x: 500, y: 400}, {x: 800, y: 400}];
+
+    function update() {
+      if(keys["ArrowRight"]) player.vx = 3;
+      else if(keys["ArrowLeft"]) player.vx = -3;
+      else player.vx = 0;
+
+      if(keys["Space"] && !player.jumping) {
+        player.vy = -8;
+        player.jumping = true;
+      }
+
+      player.vy += 0.3;
+      player.x += player.vx;
+      player.y += player.vy;
+
+      if(player.y >= 400) {
+        player.y = 400;
+        player.vy = 0;
+        player.jumping = false;
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.drawImage(playerImg, player.x, player.y, 50, 50);
+
+      enemies.forEach(e => {
+        ctx.drawImage(enemyImg, e.x, e.y, 50, 50);
+      });
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    firebase.auth().onAuthStateChanged(user => {
+      if(user) {
+        firebase.database().ref('players/' + user.uid + '/stats').once('value', snap => {
+          let stats = snap.val();
+          player.hp = stats.hp;
+          player.atk = stats.atk;
+          document.getElementById("stats").innerText = `${user.displayName} | HP: ${player.hp} | ATK: ${player.atk}`;
+        });
+        gameLoop();
+      } else {
+        window.location.href = "index.html";
+      }
+    });
+
+    window.addEventListener("keydown", e => keys[e.key] = true);
+    window.addEventListener("keyup", e => keys[e.key] = false);
+  </script>
+</body>
+</html>

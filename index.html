@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Swordigo Mage & Sword Master - Login</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #0d0d0d, #1a1a1a);
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+    .login-box {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 0 15px red;
+    }
+    button {
+      padding: 10px 20px;
+      background: red;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: darkred;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>🔥 Swordigo Mage & Sword Master 🔥</h1>
+    <p>Login with Google to start your adventure</p>
+    <button id="googleLogin">Login with Google</button>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBF-h6Ka-jU8Cd3xpaHTT-UtNBO3aDQWZU",
+      authDomain: "rpg-game-ff3f9.firebaseapp.com",
+      databaseURL: "https://rpg-game-ff3f9-default-rtdb.firebaseio.com",
+      projectId: "rpg-game-ff3f9",
+      storageBucket: "rpg-game-ff3f9.firebasestorage.app",
+      messagingSenderId: "212932693152",
+      appId: "1:212932693152:web:dbdeef096a87a7c1de0dc5",
+      measurementId: "G-JLX6YH0YFY"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    document.getElementById('googleLogin').addEventListener('click', function(){
+      var provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider)
+      .then((result) => {
+        const user = result.user;
+        // Save user stats in database
+        firebase.database().ref('players/' + user.uid).set({
+          name: user.displayName,
+          email: user.email,
+          stats: user.email === "projectmoon0001i@gmail.com" ? {hp: 999999, mp: 999999, atk: 999999, def: 999999} : {hp: 100, mp: 50, atk: 20, def: 10}
+        });
+        window.location.href = "game.html";
+      })
+      .catch((error) => {
+        alert(error.message);
+      });
+    });
+  </script>
+</body>
+</html>
