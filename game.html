@@ -3,92 +3,156 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Swordigo — Game</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<title>Hell's Gate — Web RPG (Logged In)</title>
 <style>
-  :root{
-    --bg0:#071018; --panel:#0d0d0f; --accent:#e04b4b; --muted:#dcdcdc;
-    --glass: rgba(255,255,255,0.03);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg0),#000);color:var(--muted);display:flex;align-items:center;justify-content:center;padding:14px}
-  .app{width:1200px;max-width:calc(100% - 24px);display:flex;gap:14px}
-  .game{flex:1;background:linear-gradient(180deg,#06141a,#021018);border-radius:10px;overflow:hidden;padding:10px;box-shadow:0 10px 60px rgba(0,0,0,0.7);position:relative}
-  canvas{display:block;width:100%;height:auto;border-radius:6px;background:linear-gradient(180deg,#09222b,#021018);image-rendering:pixelated}
-  .panel{width:360px;background:linear-gradient(180deg,var(--glass), rgba(0,0,0,0.18));padding:12px;border-radius:10px;border:1px solid rgba(255,0,0,0.04)}
-  h2{font-family:Cinzel,serif;color:#ffcfcf;margin-bottom:6px}
-  .card{background:rgba(0,0,0,0.14);padding:10px;border-radius:8px;margin-bottom:10px}
-  .btn{display:inline-block;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,0,0,0.12);background:transparent;color:var(--muted);cursor:pointer;margin-right:6px}
-  .small{font-size:13px;color:#e6e6e6;opacity:.95}
-  #log{height:140px;overflow:auto;padding:6px;background:rgba(0,0,0,0.12);border-radius:6px;font-size:13px}
-  .center-note{position:absolute;left:50%;top:10px;transform:translateX(-50%);color:#ffdede;opacity:.9;font-size:13px}
-  footer{position:absolute;left:12px;bottom:10px;color:#ffddd0;opacity:.6;font-size:12px}
-  @media (max-width:1100px){ .app{flex-direction:column} .panel{width:100%} }
-  /* loading */
-  #loading{position:absolute;inset:12px;border-radius:8px;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.45));display:flex;align-items:center;justify-content:center;z-index:60;flex-direction:column;gap:10px}
-  .loaderBar{width:260px;height:12px;border-radius:999px;background:rgba(255,255,255,0.04);overflow:hidden}
-  .loaderBar>i{display:block;height:100%;background:linear-gradient(90deg,#ffdede,var(--accent));width:0%}
-  .mutedSmall{font-size:12px;color:#ffdede;opacity:.95}
-  .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,111,97,0.08);border:1px solid rgba(255,111,97,0.06);color:#ffdede;font-weight:700}
+:root{
+  --bg:#071019; --panel:#0f1720; --accent:#e14b3b; --muted:#9fb0c8;
+  --grass1:#2e7d32; --grass2:#287a3a; --dirt:#6d4c41; --wood:#8b5a2b;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#021018);color:#e6f2fb;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+.app{display:flex;flex-direction:column;height:100vh;padding:12px;gap:10px}
+.header{display:flex;justify-content:space-between;align-items:center}
+.brand{font-weight:800;letter-spacing:0.6px}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:inherit;cursor:pointer}
+.userChip{display:flex;gap:8px;align-items:center}
+.userChip img{width:36px;height:36px;border-radius:50%}
+.layout{display:flex;gap:12px;flex:1;min-height:0}
+.left{flex:1;display:flex;flex-direction:column;gap:10px}
+.canvas-wrap{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 8px 30px rgba(0,0,0,0.6);min-height:0}
+canvas{width:100%;height:calc(100vh - 260px);display:block;border-radius:10px;background:transparent}
+.right{width:360px;display:flex;flex-direction:column;gap:10px;min-width:240px}
+.panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+.row{display:flex;justify-content:space-between;align-items:center}
+.small{font-size:13px;color:var(--muted)}
+.log{height:160px;overflow:auto;font-family:monospace;background:transparent;padding:8px;border-radius:6px}
+.inventory{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.item{background:rgba(255,255,255,0.02);padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);min-width:70px;text-align:center;font-size:13px}
+.controls-touch{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:40}
+.touch-btn{width:64px;height:64px;border-radius:10px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.03);font-weight:700}
+.footer{font-size:12px;color:var(--muted);text-align:center;padding-top:6px}
+
+/* Game Over overlay */
+#gameOverOverlay{
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1000;
+  background:linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6));
+  color:white; font-size:20px; flex-direction:column;
+}
+#gameOverOverlay .box{background:rgba(10,10,10,0.9); padding:22px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); text-align:center}
+a.linkBtn{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);text-decoration:none;color:white}
+@media(max-width:900px){
+  canvas{height:44vh}
+  .layout{flex-direction:column}
+  .right{width:100%}
+  .controls{justify-content:flex-start}
+  .controls-touch{right:12px;bottom:12px}
+}
 </style>
 </head>
 <body>
-  <div class="app">
-    <div class="game card">
-      <div class="center-note">Level <span id="uiLevel">1</span> • Enemies: <span id="uiEnemies">0</span></div>
-      <canvas id="gameCanvas" width="1024" height="576"></canvas>
-      <footer>←→/A D move • ↑/W/Space jump • Z primary • X secondary • V switch • P pause</footer>
+<div class="app">
+  <div class="header">
+    <div class="brand">Hell's Gate — Web RPG (Online)</div>
+    <div class="controls">
+      <div id="userArea" class="userChip small"><img id="userPic" src="" alt="" style="display:none"><span id="userName">Guest</span></div>
+      <button id="btnSignOut" class="btn">Sign out</button>
+      <button id="saveCloud" class="btn">Save to Cloud</button>
+      <button id="loadCloud" class="btn">Load from Cloud</button>
+    </div>
+  </div>
 
-      <div id="loading">
-        <div style="font-family:Cinzel,serif;color:#ffdede;font-size:20px">Loading assets…</div>
-        <div class="loaderBar"><i id="loaderFill"></i></div>
-        <div class="mutedSmall" id="loaderText">0 / 0</div>
+  <div class="layout">
+    <div class="left">
+      <div class="canvas-wrap panel">
+        <canvas id="game" width="1280" height="720"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="row">
+          <div style="font-weight:700">World Log</div>
+          <div class="small" id="levelInfo">Level 1 • Layer 1/5</div>
+        </div>
+        <div id="log" class="log"></div>
       </div>
     </div>
 
-    <div class="panel">
-      <h2>Swordigo — Adventure</h2>
-
-      <div class="card">
-        <div class="small">Player: <strong id="uiName">Guest</strong> <span id="adminBadge"></span></div>
-        <div class="small">Class: <strong id="uiClass">Swordmaster</strong></div>
-        <div style="margin-top:8px">
-          <div class="small">HP: <span id="uiHP">100</span> • Mana: <span id="uiMana">100</span></div>
-          <div class="small">XP: <span id="uiXP">0</span> • Lvl: <span id="uiPLvl">1</span></div>
+    <div class="right">
+      <div class="panel">
+        <div class="row">
+          <div style="font-weight:700">Player</div>
+          <div class="small" id="playerId">Local</div>
         </div>
-        <div style="margin-top:8px">
-          <button id="btnSave" class="btn">Save</button>
-          <button id="btnLoad" class="btn">Load</button>
-          <button id="btnSignOut" class="btn">Sign Out</button>
+        <div class="row"><div>Level</div><div id="playerLevel">1</div></div>
+        <div class="row"><div>HP</div><div id="hpText">100/100</div></div>
+        <div style="height:10px;background:#162224;border-radius:6px;overflow:hidden;margin-top:6px">
+          <div id="hpBar" style="height:100%;background:linear-gradient(90deg,#ff7b7b,#ff3b3b);width:100%"></div>
+        </div>
+        <div class="row"><div>Attack</div><div id="atkText">8</div></div>
+        <div class="row"><div>Magic</div><div id="magText">4</div></div>
+        <div class="row"><div>Speed</div><div id="spdText">140</div></div>
+        <div class="row"><div>XP</div><div id="xpText">0/100</div></div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button id="attackLightBtn" class="btn">Light</button>
+          <button id="attackHeavyBtn" class="btn">Heavy</button>
+          <button id="attackMagicBtn" class="btn">Magic</button>
+          <button id="attackComboBtn" class="btn">Combo</button>
         </div>
       </div>
 
-      <div class="card">
-        <div class="small">Inventory</div>
-        <div class="small">Coins: <span id="uiCoins">0</span> • Potions: <span id="uiPots">0</span></div>
+      <div id="statusPanel" class="panel" style="display:none">
+        <div style="font-weight:700">Status & Allocate Points</div>
+        <div class="small">Unspent: <span id="statPoints">0</span></div>
+        <div style="margin-top:8px">
+          <div class="row"><div>STR</div><div id="statStr">1</div></div>
+          <div class="row"><div>MAG</div><div id="statMag">1</div></div>
+          <div class="row"><div>DEF</div><div id="statDef">1</div></div>
+          <div class="row"><div>SPD</div><div id="statSpd">1</div></div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="addStr" class="btn">+STR</button>
+            <button id="addMag" class="btn">+MAG</button>
+            <button id="addDef" class="btn">+DEF</button>
+            <button id="addSpd" class="btn">+SPD</button>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="small">High Scores</div>
-        <ol id="scores" class="small"></ol>
+      <div id="inventoryPanel" class="panel" style="display:none">
+        <div style="font-weight:700">Inventory</div>
+        <div class="inventory" id="inventoryList"></div>
       </div>
 
-      <div class="card">
-        <div class="small">Log</div>
-        <div id="log"></div>
+      <div id="storePanel" class="panel" style="display:none">
+        <div style="font-weight:700">Store</div>
+        <div class="small">Gold: <span id="goldText">0</span></div>
+        <div id="storeItems" style="margin-top:8px;display:flex;flex-direction:column;gap:8px"></div>
       </div>
     </div>
   </div>
 
-  <!-- Firebase v8 -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <div class="footer small">Logged-in mode. Your progress will be saved to your Google account (Realtime DB) when you press Save to Cloud.</div>
+</div>
+
+<!-- Game Over overlay -->
+<div id="gameOverOverlay"><div class="box"><div id="gameOverText">You died — Game Over</div><a class="linkBtn" id="goHome">Return to Login</a></div></div>
+
+<!-- Firebase compat SDKs (matching login.html) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-/* ---------------- Config ---------------- */
+/*
+  game.html — connected to Firebase Auth & Realtime DB (compat)
+  - Requires the user to be signed in (redirects to login.html if not)
+  - Loads /users/{uid}/save into the game state
+  - Save to cloud writes to /users/{uid}/save
+  - Sign out returns to login.html
+*/
+
+// ---------- Firebase config (provided) ----------
 const firebaseConfig = {
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   apiKey: "AIzaSyBF-h6Ka-jU8Cd3xpaHTT-UtNBO3aDQWZU",
   authDomain: "rpg-game-ff3f9.firebaseapp.com",
   databaseURL: "https://rpg-game-ff3f9-default-rtdb.firebaseio.com",
@@ -98,453 +162,462 @@ const firebaseConfig = {
   appId: "1:212932693152:web:dbdeef096a87a7c1de0dc5",
   measurementId: "G-JLX6YH0YFY"
 };
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.database();
+const rtdb = firebase.database();
 
-/* ---------------- DOM ---------------- */
-const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
-const loading = document.getElementById('loading'), loaderFill = document.getElementById('loaderFill'), loaderText = document.getElementById('loaderText');
-const uiLevel = document.getElementById('uiLevel'), uiEnemies = document.getElementById('uiEnemies');
-const uiName = document.getElementById('uiName'), uiClass = document.getElementById('uiClass');
-const uiHP = document.getElementById('uiHP'), uiMana = document.getElementById('uiMana');
-const uiXP = document.getElementById('uiXP'), uiPLvl = document.getElementById('uiPLvl');
-const uiCoins = document.getElementById('uiCoins'), uiPots = document.getElementById('uiPots');
-const scoresEl = document.getElementById('scores'), logEl = document.getElementById('log');
-const btnSave = document.getElementById('btnSave'), btnLoad = document.getElementById('btnLoad'), btnSignOut = document.getElementById('btnSignOut');
-const adminBadge = document.getElementById('adminBadge');
+// ---------- Auth check & UI ----------
+const userNameEl = document.getElementById('userName');
+const userPicEl = document.getElementById('userPic');
+const btnSignOut = document.getElementById('btnSignOut');
+btnSignOut.onclick = ()=>{ auth.signOut().then(()=>{ window.location.href = 'login.html'; }); };
 
-function log(s){ const e = document.createElement('div'); e.textContent = '['+new Date().toLocaleTimeString()+'] '+s; logEl.prepend(e); }
-
-/* ---------------- Utilities ---------------- */
-function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
-function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-function now(){ return performance.now()/1000; }
-function rectOverlap(a,b){ return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h); }
-
-/* ---------------- Assets (OpenGameArt links) ----------------
-   These are example OpenGameArt files — if any fail we fallback to simple shapes.
-*/
-const ASSET_URLS = {
-  playerSword: 'https://opengameart.org/sites/default/files/warrior_m.png',
-  playerMage:  'https://opengameart.org/sites/default/files/animated-mage_0.png',
-  tileGrass:   'https://opengameart.org/sites/default/files/grass_7.png',
-  enemyA:      'https://opengameart.org/sites/default/files/zombie.png',
-  enemyB:      'https://opengameart.org/sites/default/files/monster3.png',
-  enemyC:      'https://opengameart.org/sites/default/files/bat.png',
-  boss:        'https://opengameart.org/sites/default/files/boss_0.png',
-  coin:        'https://opengameart.org/sites/default/files/coin_gold.png',
-  potion:      'https://opengameart.org/sites/default/files/potion_red.png'
-};
-const IMGS = {}; let loaded = 0, tot = Object.keys(ASSET_URLS).length;
-function preload(cb){
-  loaderText.textContent = `0 / ${tot}`;
-  for(const k in ASSET_URLS){
-    const img = new Image(); img.crossOrigin='anonymous';
-    img.onload = ()=>{ IMGS[k]=img; loaded++; loaderFill.style.width = Math.round((loaded/tot)*100)+'%'; loaderText.textContent = `${loaded} / ${tot}`; if(loaded===tot) setTimeout(()=>{ loading.style.display='none'; cb(); },180); };
-    img.onerror = ()=>{ IMGS[k]=null; loaded++; loaderFill.style.width = Math.round((loaded/tot)*100)+'%'; loaderText.textContent = `${loaded} / ${tot}`; if(loaded===tot) setTimeout(()=>{ loading.style.display='none'; cb(); },180); };
-    img.src = ASSET_URLS[k];
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){ // not signed in -> redirect to login
+    window.location.href = 'login.html';
+    return;
   }
-}
+  // signed in: show profile
+  userNameEl.textContent = user.displayName || 'Player';
+  if(user.photoURL){ userPicEl.src = user.photoURL; userPicEl.style.display = ''; } else userPicEl.style.display = 'none';
+  document.getElementById('playerId').textContent = user.uid.slice(0,8);
+  // load saved data
+  await loadFromCloud();
+});
 
-/* ---------------- Game state ---------------- */
-const W = canvas.width, H = canvas.height, TILE = 32;
-const MAX_LEVELS = 100, BOSS_EVERY = 10;
-const ADMIN_EMAIL = 'projectmoon0001i@gmail.com'.toLowerCase();
+// ---------- Game code (adapted from previous full game) ----------
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W = canvas.width, H = canvas.height;
+function resizeCanvas(){ const ratio=W/H; const maxW=Math.min(window.innerWidth-40,1400); let newW=Math.min(maxW,W); let newH=Math.floor(newW/ratio); if(window.innerWidth<900){ newW=window.innerWidth-32; newH=Math.floor(newW/ratio);} canvas.style.width=newW+'px'; canvas.style.height=newH+'px'; }
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+const rand = (a,b)=> Math.random()*(b-a)+a;
+const clamp = (v,a,b)=> Math.max(a,Math.min(b,v));
+const now = ()=> performance.now();
+function formatTime(){ return new Date().toLocaleTimeString(); }
+function log(msg){ const el=document.getElementById('log'); const d=document.createElement('div'); d.textContent=`[${formatTime()}] ${msg}`; el.prepend(d); if(el.childNodes.length>400) el.removeChild(el.lastChild); }
+
+// Game state
+const MAX_LEVEL = 100;
+let currentLevel = 1;
+let currentLayer = 1;
+function layersFor(level){ return 5 + (level - 1); }
 
 const player = {
-  name:'Guest', class:'sword',
-  x:120,y:H-TILE*3,w:28,h:36,vx:0,vy:0,facing:1,
-  speed:220,jump:420,
-  hp:100,maxHp:100,mana:100,maxMana:100,
-  xp:0,lvl:1,coins:0,pots:0,
-  atkCD:0,dashCD:0
+  x: W/2, y: H/2, w:28, h:36,
+  hp:100, maxHp:100, atk:8, mag:4, spd:140,
+  lvl:1, xp:0, gold:0, statPoints:0,
+  stats:{str:1,mag:1,def:1,spd:1},
+  inventory:[], equip:{weapon:null,armor:null,artifact:null},
+  mode:'sword', // 'sword' | 'magic'
+  facing:{x:0,y:-1}
 };
 
-const keys = {}; window.addEventListener('keydown', e=>{ keys[e.key.toLowerCase()] = true; if(e.key.toLowerCase()==='v') toggleClass(); if(e.key.toLowerCase()==='p') paused = !paused; });
-window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; });
+let worldObjects = [];
+let enemies = [];
+let projectiles = [];
+let attackFX = [];
+let lastTick = now();
+let lastSpawn = 0;
+let localUser = null; // Firebase user
 
-/* ---------------- Procedural maps w/ islands & areas ---------------- */
-const maps = [];
-function generateMaps(){
-  for(let L=1; L<=MAX_LEVELS; L++){
-    const wTiles = clamp(30 + Math.floor(L*0.6), 30, 180);
-    const tiles = [];
-    for(let i=0;i<wTiles;i++) tiles.push({x:i*TILE, y:H-TILE, w:TILE, h:TILE, areaId:0});
-    const islands = [];
-    const islandCount = clamp(2 + Math.floor(L/12), 2, 14);
-    for(let i=0;i<islandCount;i++){
-      const ix = rand(6, wTiles-6)*TILE;
-      const iy = rand(4, 12)*TILE;
-      const iw = rand(2,6)*TILE;
-      tiles.push({x:ix, y:iy, w:iw, h:TILE, areaId:i+1});
-      islands.push({id:i+1, x:ix, y:iy, w:iw, h:TILE, minX: ix - TILE*2, maxX: ix + iw + TILE*2});
-    }
-    const enemies = []; const baseCount = clamp(3 + Math.floor(L/3), 3, 60);
-    for(let e=0;e<baseCount;e++){
-      const useIsland = Math.random() < 0.4 && islands.length>0;
-      const area = useIsland ? islands[rand(0,islands.length-1)] : {id:0, x:rand(6,wTiles-4)*TILE, y:H-TILE*3};
-      const ex = (area.id===0) ? rand(6,wTiles-4)*TILE : rand(area.x, area.x + Math.max(1, area.w - TILE));
-      const ey = (area.id===0) ? H - TILE*2 - rand(0,120) : area.y - 28;
-      let t = 'basic'; const r = Math.random();
-      if(L >= 70 && r < 0.12) t = 'ranged';
-      else if(L >= 40 && r < 0.20) t = 'fast';
-      else if(L >= 20 && r < 0.12) t = 'tank';
-      else if(r < 0.06) t = 'ghost';
-      enemies.push({x:ex,y:ey,type:t,areaId:area.id,patrolMin:area.id===0?ex-TILE*6:area.minX,patrolMax:area.id===0?ex+TILE*6:area.maxX});
-    }
-    const pickups = [];
-    for(let k=0;k<clamp(3 + Math.floor(L/10),3,20);k++){
-      pickups.push({x:rand(6,wTiles-4)*TILE, y:H - TILE*2 - rand(0,120), type: Math.random()<0.85?'coin':'potion', areaId:0});
-    }
-    const boss = (L % BOSS_EVERY === 0) ? {x:(wTiles-10)*TILE, y:H - TILE*4 - 40, type:'boss', hp: 200 + L*40, areaId:0} : null;
-    const exit = {x:(wTiles-2)*TILE, y:H-TILE-64};
-    maps.push({L,wTiles,tiles,islands,enemies,pickups,boss,exit});
+// store items
+const STORE_ITEMS = [
+  { id:'sword_bronze', name:'Bronze Sword', type:'weapon', atk:4, mag:0, price:60 },
+  { id:'staff_wood', name:'Novice Staff', type:'weapon', atk:0, mag:5, price:70 },
+  { id:'armor_leather', name:'Leather Armor', type:'armor', def:3, price:90 },
+  { id:'artifact_ring', name:'Ring of Fortune', type:'artifact', price:150, bonus:{goldMult:1.05} }
+];
+
+// Procedural generation
+function generateWorld(layer){
+  worldObjects = [];
+  const density = clamp(5 + Math.floor(layer/2), 5, 24);
+  for(let i=0;i<density;i++){
+    const x = rand(40, W-80), y = rand(40, H-120);
+    const r = Math.random();
+    if(r < 0.55) worldObjects.push({type:'tree', x,y, size:rand(18,40)});
+    else if(r < 0.8) worldObjects.push({type:'rock', x,y, size:rand(10,20)});
+    else worldObjects.push({type:'house', x,y, w:rand(36,80), h:rand(24,46)});
   }
 }
-generateMaps();
 
-/* ---------------- Runtime ---------------- */
-let ents = [], pickups = [], projectiles = [], particles = [];
-let currentLevel = 1;
-let paused = false;
+// Drawing helpers
+function drawGround(){ const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#163e1f'); g.addColorStop(1,'#0f2b16'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); for(let i=0;i<160;i++){const x=(i*97)%W,y=(i*43)%H;ctx.fillStyle=(i%2? '#2e7d32':'#287a3a');ctx.fillRect(x,y+20,2,6+(i%3));}}
+function drawTree(t){ ctx.fillStyle='#6b3f22'; ctx.fillRect(t.x-(t.size/6), t.y, t.size/3, t.size*0.9); ctx.fillStyle='#1f7a2a'; ctx.beginPath(); ctx.ellipse(t.x, t.y - t.size*0.2, t.size*0.9, t.size, 0,0,Math.PI*2); ctx.fill(); }
+function drawRock(r){ ctx.fillStyle='#6b6b6b'; ctx.beginPath(); ctx.ellipse(r.x, r.y, r.size, r.size*0.7, 0,0,Math.PI*2); ctx.fill(); }
+function drawHouse(h){ ctx.fillStyle='#8b5a2b'; ctx.fillRect(h.x - h.w/2, h.y, h.w, h.h); ctx.fillStyle='#4a2b1b'; ctx.beginPath(); ctx.moveTo(h.x - h.w/2 - 2, h.y); ctx.lineTo(h.x, h.y - h.h*0.8); ctx.lineTo(h.x + h.w/2 + 2, h.y); ctx.fill(); ctx.fillStyle='#3b2418'; ctx.fillRect(h.x - 12, h.y + h.h - 16, 24, 16); }
+function roundRect(ctx,x,y,w,h,r,fill){ if(typeof r==='undefined') r=6; ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if(fill) ctx.fill(); }
+function drawPlayer(){ ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(0, player.h/2 + 6, player.w*0.6, player.h*0.25, 0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#ff7b7b'; roundRect(ctx, -player.w/2, -player.h/2, player.w, player.h, 6, true); ctx.fillStyle='#ffd57a'; ctx.fillRect(-player.w/4, -player.h/2 - 10, player.w/2, 8); if(player.mode==='sword'){ ctx.fillStyle='#c9b27a'; ctx.fillRect(player.w/2, -6, 10, 14);} else { ctx.fillStyle='#8ad8ff'; ctx.beginPath(); ctx.arc(0, -player.h/2 - 12, 8, 0, Math.PI*2); ctx.fill(); } ctx.restore(); }
+function drawEnemy(e){ ctx.save(); ctx.translate(e.x,e.y); ctx.fillStyle = e.isBoss ? '#ffb86b' : (e.lvl >= player.lvl ? '#ff6b6b' : '#7bd389'); roundRect(ctx, -e.w/2, -e.h/2, e.w, e.h, 6, true); ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(-e.w/2, e.h/2+6, e.w, 6); ctx.fillStyle='#ff7b7b'; const pct = Math.max(0,e.hp / e.maxHp); ctx.fillRect(-e.w/2, e.h/2+6, e.w * pct, 6); ctx.restore(); }
+function drawProjectile(p){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle='rgba(120,200,255,0.95)'; ctx.fill(); }
+function drawAttackFX(fx){ if(fx.type==='slash'){ ctx.save(); ctx.globalAlpha=fx.alpha; ctx.strokeStyle='rgba(255,230,160,0.95)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(fx.x,fx.y,fx.r,fx.a1,fx.a2); ctx.stroke(); ctx.restore(); } else if(fx.type==='magicBurst'){ ctx.save(); ctx.globalAlpha=fx.alpha; ctx.fillStyle='rgba(120,200,255,0.22)'; ctx.beginPath(); ctx.arc(fx.x,fx.y,fx.r,0,Math.PI*2); ctx.fill(); ctx.restore(); } }
 
-/* helper spawn */
-function spawnEnemy(t){
-  const baseHP = t.type==='tank'?120: t.type==='boss'? (t.hp||400) : t.type==='ghost'?35:45;
-  const speed = t.type==='fast'?90: t.type==='boss'?60:45;
-  const w = t.type==='boss'?64:28, h = t.type==='boss'?64:28;
-  const minX = t.patrolMin!==undefined? t.patrolMin : (t.areaId? t.x - TILE*2 : t.x - TILE*6);
-  const maxX = t.patrolMax!==undefined? t.patrolMax : (t.areaId? t.x + TILE*2 + TILE : t.x + TILE*6);
-  return {x:t.x,y:t.y,w,h,type:t.type,hp:baseHP,vx:speed,dir:Math.random()<0.5?-1:1,timer:0,areaId:t.areaId,minX,maxX};
+// ---------- Spawn & AI ----------
+function spawnEnemy(layer, boss=false){
+  const edge = Math.floor(rand(0,4));
+  let x = rand(60, W-60), y = rand(60, H-140);
+  if(edge===0){ x = rand(60, W-60); y = -40; }
+  if(edge===1){ x = rand(60, W-60); y = H + 40; }
+  if(edge===2){ x = -40; y = rand(60, H-60); }
+  if(edge===3){ x = W + 40; y = rand(60, H-60); }
+  const base = currentLevel + Math.floor(layer/5);
+  const lvl = clamp(Math.floor(base + rand(-1,2)), 1, MAX_LEVEL);
+  const size = boss?110:(20 + Math.floor(rand(8,26)));
+  const hp = boss?Math.round(250 + lvl*120):Math.round(30 + lvl*12 + rand(0,30));
+  const atk = boss?Math.round(20 + lvl*6):Math.round(3 + lvl*2);
+  const spd = boss?18:(30 + lvl*4 + rand(0,30));
+  enemies.push({x,y,w:size,h:size,hp,maxHp:hp,atk,spd,lvl,isBoss:boss,layer});
+}
+function enemyUpdate(e, dt){
+  const dx = player.x - e.x, dy = player.y - e.y;
+  const L = Math.hypot(dx,dy)||1;
+  e.x += (dx/L) * (e.spd * dt);
+  e.y += (dy/L) * (e.spd * dt);
+  // collision with world objects: bounce out
+  for(const obj of worldObjects){
+    if(rectCircleCollision(obj, e.x, e.y, Math.max(e.w,e.h)/2)){
+      const pushX = e.x - (obj.x || 0), pushY = e.y - (obj.y || 0);
+      const mag = Math.hypot(pushX,pushY)||1;
+      e.x += (pushX/mag) * 12 * dt; e.y += (pushY/mag) * 12 * dt;
+    }
+  }
+  // collision player
+  if(circleCollision(e.x,e.y,Math.max(e.w,e.h)/2, player.x,player.y,Math.max(player.w,player.h)/2)){
+    if(!e._lastHit || now() - e._lastHit > 700){
+      const dmg = Math.max(1, e.atk - (player.stats.def || 0));
+      player.hp -= dmg; e._lastHit = now();
+      log(`You were hit for ${dmg} HP.`);
+      if(player.hp <= 0) handleGameOver();
+    }
+  }
 }
 
-/* load level */
-function loadLevel(n){
-  currentLevel = clamp(n,1,MAX_LEVELS);
-  const m = maps[currentLevel-1];
-  ents = m.enemies.map(e=>spawnEnemy(e));
-  if(m.boss) ents.push(spawnEnemy(m.boss));
-  pickups = m.pickups.map(p=>Object.assign({},p));
-  projectiles = []; particles = [];
-  player.x = 120; player.y = H - TILE*3; player.vx=0; player.vy=0;
-  log('Loaded Level '+currentLevel + (m.boss ? ' (Boss)' : ''));
-  updateUI();
+// ---------- Combat ----------
+function playerMelee(kind='light'){
+  // light / heavy difference
+  const base = kind==='light' ? Math.round(player.atk + player.stats.str*2) : Math.round(player.atk*1.7 + player.stats.str*3);
+  // swing fx
+  const angle = Math.atan2(player.facing.y, player.facing.x);
+  const fx = { type:'slash', x: player.x + player.facing.x*22, y: player.y + player.facing.y*18, r: 46, a1: angle-1.0, a2: angle+1.0, alpha:1, ttl:260 };
+  attackFX.push(fx);
+  // damage enemies in range
+  for(const e of enemies.slice()){
+    const d = Math.hypot(e.x - player.x, e.y - player.y);
+    if(d < 56){
+      e.hp -= base;
+      log(`You ${kind}-hit ${e.isBoss?'Boss':'Mob'} for ${base}.`);
+      if(e.hp <= 0) killEnemy(e);
+    }
+  }
 }
-loadLevel(1);
+function playerMagic(){
+  const speed = 10;
+  const px = player.x + player.facing.x*22, py = player.y + player.facing.y*18;
+  const p = { x:px, y:py, vx: player.facing.x*speed, vy: player.facing.y*speed, r:10, dmg: Math.round(player.mag + player.stats.mag*2), ttl: 2600 };
+  projectiles.push(p);
+  attackFX.push({ type:'magicBurst', x:px, y:py, r:18, alpha:1, ttl:160 });
+}
+let comboQueue = []; // store combos by sequence of inputs
+function attemptCombo(){
+  // Example combo: light -> light -> heavy = spinning slash (aoe)
+  // comboQueue holds last few attacks as strings: 'L' or 'H' or 'M'
+  const seq = comboQueue.join('');
+  if(seq.endsWith('LLH')){
+    // spinning AOE
+    attackFX.push({ type:'magicBurst', x:player.x, y:player.y, r:80, alpha:1, ttl:420 });
+    for(const e of enemies.slice()){
+      const d = Math.hypot(e.x-player.x, e.y-player.y);
+      if(d < 90){
+        const dmg = Math.round(player.atk*2.2 + player.stats.str*3);
+        e.hp -= dmg; log(`Combo hit ${e.isBoss?'Boss':'Mob'} for ${dmg}.`);
+        if(e.hp <= 0) killEnemy(e);
+      }
+    }
+    comboQueue = []; // reset
+  } else if(seq.endsWith('MHM')){ // magic-heavy-magic -> meteor small
+    attackFX.push({ type:'magicBurst', x:player.x + player.facing.x*100, y:player.y + player.facing.y*100, r:60, alpha:1, ttl:420 });
+    for(const e of enemies.slice()){
+      const d = Math.hypot(e.x - (player.x + player.facing.x*100), e.y - (player.y + player.facing.y*100));
+      if(d < 80){ const dmg = Math.round(player.mag*3 + player.stats.mag*4); e.hp -= dmg; log(`Combo magic hit ${dmg}.`); if(e.hp<=0) killEnemy(e); }
+    }
+    comboQueue = [];
+  }
+  // keep queue short
+  if(comboQueue.length > 6) comboQueue.shift();
+}
 
-/* abilities */
-function toggleClass(){ player.class = (player.class==='sword')?'mage':'sword'; uiClass.textContent = (player.class==='sword')?'Swordmaster':'Mage'; log('Switched to '+uiClass.textContent); }
-function swordAttack(){ if(player.atkCD>0) return; player.atkCD=0.36; const hx = player.x + (player.facing>0? player.w : -40); projectiles.push({x:hx,y:player.y+8,w:40,h:24,life:0.12,dmg:28,source:'sword'}); for(let i=0;i<8;i++) particles.push({x:hx+rand(-6,6),y:player.y+8+rand(-8,8),vx:rand(-40,40),vy:rand(-120,-20),life:0.45,col:'rgba(255,160,120,0.95)'}); }
-function mageBolt(){ if(player.atkCD>0 || player.mana<10) return; player.atkCD=0.18; player.mana-=10; const vx = player.facing * 420; projectiles.push({x:player.x+player.w/2,y:player.y+12,w:12,h:12,life:2.4,vx:vx,vy:0,dmg:18,source:'mage'}); }
-function mageBurst(){ if(player.atkCD>0 || player.mana<40) return; player.atkCD=0.6; player.mana-=40; const n=12; for(let i=0;i<n;i++){ const ang=(Math.PI*2)*(i/n); projectiles.push({x:player.x+player.w/2,y:player.y+player.h/2,w:8,h:8,life:1.2,vx:Math.cos(ang)*260,vy:Math.sin(ang)*260,dmg:14,source:'mage'}); } for(let i=0;i<36;i++) particles.push({x:player.x+player.w/2+rand(-10,10),y:player.y+player.h/2+rand(-10,10),vx:rand(-160,160),vy:rand(-200,-10),life:0.8,col:'rgba(180,120,255,0.9)'}); }
-function dash(){ if(player.dashCD>0) return; player.dashCD=0.9; player.vx = player.facing * 520; for(let i=0;i<6;i++) particles.push({x:player.x+rand(-6,6),y:player.y+rand(-6,6),vx:-player.facing*rand(40,140),vy:rand(-20,20),life:0.3,col:'rgba(255,190,120,0.9)'}); }
-function interact(){ const m=maps[currentLevel-1]; if(player.x > m.exit.x - 80){ if(m.boss && ents.find(e=>e.type==='boss')){ log('Defeat the boss'); return; } if(currentLevel < MAX_LEVELS) loadLevel(currentLevel+1); else log('Final level reached'); } }
+function killEnemy(e){
+  const idx = enemies.indexOf(e);
+  if(idx>=0) enemies.splice(idx,1);
+  const xpGain = Math.round(12 + e.lvl*8 + (e.isBoss?400:0));
+  player.xp += xpGain; player.gold += Math.round(6 + e.lvl*3 + (e.isBoss?60:0));
+  log(`Enemy defeated! +${xpGain} XP.`);
+  if(e.isBoss){ log('Boss slain — layer cleared'); currentLayer = layersFor(currentLevel) + 1; }
+  checkLevelUp();
+}
 
-/* input action keys */
-window.addEventListener('keydown',(e)=>{
-  const k = e.key.toLowerCase();
-  if(k==='z'){ if(player.class==='sword') swordAttack(); else mageBolt(); }
-  if(k==='x'){ if(player.class==='sword') dash(); else mageBurst(); }
-  if(k==='c'){ interact(); }
+// ---------- Projectiles & FX update ----------
+function projectilesUpdate(dt){
+  for(const p of projectiles.slice()){
+    p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.ttl -= dt*1000;
+    for(const e of enemies.slice()){
+      if(circleCollision(p.x,p.y,p.r,e.x,e.y,Math.max(e.w,e.h)/2)){
+        e.hp -= p.dmg; p.ttl = -1; attackFX.push({ type:'magicBurst', x:p.x, y:p.y, r:24, alpha:1, ttl:180 }); log(`Magic hit for ${p.dmg}.`); if(e.hp<=0) killEnemy(e);
+      }
+    }
+    for(const obj of worldObjects) if(rectCircleCollision(obj, p.x, p.y, p.r)){ p.ttl=-1; attackFX.push({type:'magicBurst', x:p.x, y:p.y, r:18, alpha:1, ttl:140}); }
+  }
+  projectiles = projectiles.filter(p=>p.ttl>0);
+}
+function attackFXUpdate(dt){ for(const fx of attackFX.slice()){ fx.ttl -= dt*1000; fx.alpha = Math.max(0, fx.ttl / 260); if(fx.ttl <= 0) attackFX.splice(attackFX.indexOf(fx),1); } }
+
+// ---------- Collision helpers ----------
+function circleCollision(x1,y1,r1,x2,y2,r2){ return (Math.hypot(x2-x1,y2-y1) <= (r1 + r2)); }
+function rectCircleCollision(rect, cx, cy, cr){
+  let rx = rect.x - (rect.w||0)/2 || rect.x;
+  let ry = rect.y - (rect.h||0)/2 || rect.y;
+  if(rect.type === 'tree' || rect.type === 'rock'){ rx = rect.x - (rect.size||0)/2; ry = rect.y - (rect.size||0)/2; }
+  const closestX = clamp(cx, rx, rx + (rect.w || rect.size || 0));
+  const closestY = clamp(cy, ry, ry + (rect.h || rect.size || 0));
+  const dx = cx - closestX, dy = cy - closestY;
+  return (dx*dx + dy*dy) <= cr*cr;
+}
+
+// ---------- Player death / game over ----------
+function handleGameOver(){
+  document.getElementById('gameOverOverlay').style.display = 'flex';
+  document.getElementById('gameOverText').textContent = 'You died — Game Over';
+  // allow user to return to login
+  document.getElementById('goHome').onclick = ()=>{ auth.signOut().then(()=>{ window.location.href = 'login.html'; }); };
+}
+
+// ---------- Input handling ----------
+let keys = {}; window.addEventListener('keydown', e=>{ keys[e.key]=true; if(e.key===' '){ e.preventDefault(); playerMelee('light'); comboQueue.push('L'); attemptCombo(); } if(e.key.toLowerCase()==='q'){ toggleMode(); } if(e.key==='Enter'){ playerMelee('heavy'); comboQueue.push('H'); attemptCombo(); } if(e.key.toLowerCase()==='m'){ playerMagic(); comboQueue.push('M'); attemptCombo(); } }); window.addEventListener('keyup', e=>{ keys[e.key]=false; });
+
+canvas.addEventListener('click', e=>{
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) * (W / rect.width);
+  const cy = (e.clientY - rect.top) * (H / rect.height);
+  const dx = cx - player.x, dy = cy - player.y; const L = Math.hypot(dx,dy)||1;
+  player.facing.x = dx/L; player.facing.y = dy/L;
+  if(player.mode==='sword'){ playerMelee('light'); comboQueue.push('L'); attemptCombo(); } else { playerMagic(); comboQueue.push('M'); attemptCombo(); }
 });
 
-/* physics & update */
+// touch move / tap attack
+canvas.addEventListener('touchstart', (ev)=>{
+  const t = ev.touches[0]; const rect = canvas.getBoundingClientRect();
+  const x = (t.clientX - rect.left) * (W / rect.width), y = (t.clientY - rect.top) * (H / rect.height);
+  touchTarget = { x,y, t: now() };
+  setTimeout(()=>{ if(touchTarget && (now() - touchTarget.t < 220)){ const dx = touchTarget.x - player.x, dy = touchTarget.y - player.y; const L = Math.hypot(dx,dy)||1; player.facing.x = dx/L; player.facing.y = dy/L; if(player.mode==='sword'){ playerMelee('light'); comboQueue.push('L'); attemptCombo(); } else { playerMagic(); comboQueue.push('M'); attemptCombo(); } } }, 180);
+});
+canvas.addEventListener('touchmove', (ev)=>{ const t = ev.touches[0]; const rect = canvas.getBoundingClientRect(); const x=(t.clientX-rect.left)*(W/rect.width), y=(t.clientY-rect.top)*(H/rect.height); touchTarget={x,y,t:now()};});
+canvas.addEventListener('touchend', ()=>{ touchTarget=null; });
+
+// UI buttons
+document.getElementById('attackLightBtn').onclick = ()=>{ playerMelee('light'); comboQueue.push('L'); attemptCombo(); };
+document.getElementById('attackHeavyBtn').onclick = ()=>{ playerMelee('heavy'); comboQueue.push('H'); attemptCombo(); };
+document.getElementById('attackMagicBtn').onclick = ()=>{ playerMagic(); comboQueue.push('M'); attemptCombo(); };
+document.getElementById('attackComboBtn').onclick = ()=>{ attemptCombo(); };
+document.getElementById('switchMode').onclick = toggleMode;
+
+// toggle mode
+function toggleMode(){ player.mode = (player.mode==='sword') ? 'magic' : 'sword'; document.getElementById('modeText').textContent = player.mode.charAt(0).toUpperCase()+player.mode.slice(1); log('Switched to '+player.mode); }
+
+// ---------- Store & Inventory UI ----------
+function renderStore(){
+  const root = document.getElementById('storeItems'); if(!root) return; root.innerHTML = '';
+  STORE_ITEMS.forEach(it=>{
+    const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center';
+    const left = document.createElement('div'); left.innerHTML = `<div style="font-weight:700">${it.name}</div><div class="small">${it.type} • ${it.price}g</div>`;
+    const buy = document.createElement('button'); buy.className='btn'; buy.textContent='Buy';
+    buy.onclick = ()=>{ if(player.gold >= it.price){ player.gold -= it.price; player.inventory.push(JSON.parse(JSON.stringify(it))); renderInventory(); refreshUI(); saveToCloud(); log('Bought '+it.name); } else alert('Not enough gold'); };
+    row.appendChild(left); row.appendChild(buy); root.appendChild(row);
+  });
+}
+function renderInventory(){
+  const root = document.getElementById('inventoryList'); if(!root) return; root.innerHTML = '';
+  player.inventory.forEach((it, idx)=>{
+    const el = document.createElement('div'); el.className='item'; el.innerHTML = `${it.name}<div class="small">${it.type}</div>`;
+    el.onclick = ()=>{ if(it.type==='weapon') player.equip.weapon = it; if(it.type==='armor') player.equip.armor = it; if(it.type==='artifact') player.equip.artifact = it; applyEquip(); refreshUI(); saveToCloud(); log('Equipped '+it.name); };
+    el.oncontextmenu = (e)=>{ e.preventDefault(); if(confirm('Drop '+it.name+'?')){ player.inventory.splice(idx,1); renderInventory(); saveToCloud(); log('Dropped '+it.name); } };
+    root.appendChild(el);
+  });
+}
+function applyEquip(){ const wAtk = player.equip.weapon?.atk || 0; const wMag = player.equip.weapon?.mag || 0; const def = player.equip.armor?.def || 0; player.atk = 8 + wAtk; player.mag = 4 + wMag; player.stats.def = Math.max(1, (player.stats.def || 1) + def - (player.equip.armor?0:0)); }
+
+// ---------- Save / Load to Firebase ----------
+async function saveToCloud(){
+  if(!auth.currentUser) { log('Not signed in - cannot save'); return; }
+  const payload = {
+    player:{
+      x: player.x, y: player.y, hp: player.hp, maxHp: player.maxHp, atk: player.atk, mag: player.mag, spd: player.spd,
+      lvl: player.lvl, xp: player.xp, gold: player.gold, statPoints: player.statPoints, stats: player.stats,
+      inventory: player.inventory, equip: player.equip, mode: player.mode
+    },
+    world:{ currentLevel, currentLayer, enemies, worldObjects, ts: Date.now() }
+  };
+  try{
+    await rtdb.ref('users/' + auth.currentUser.uid + '/save').set(payload);
+    log('Saved to cloud.');
+  }catch(err){ console.error(err); log('Cloud save failed.'); }
+}
+
+async function loadFromCloud(){
+  if(!auth.currentUser) return;
+  localUser = auth.currentUser;
+  document.getElementById('userName').textContent = localUser.displayName || 'Player';
+  if(localUser.photoURL){ document.getElementById('userPic').src = localUser.photoURL; document.getElementById('userPic').style.display=''; }
+  try{
+    const snap = await rtdb.ref('users/' + localUser.uid + '/save').once('value');
+    const data = snap.val();
+    if(!data){ // no save -> create default profile if absent
+      await rtdb.ref('users/' + localUser.uid).update({ name: localUser.displayName, email: localUser.email || '', photo: localUser.photoURL || '', createdAt: Date.now() });
+      // keep defaults
+      generateWorld(currentLayer); for(let i=0;i<4;i++) spawnEnemy(1,false); renderStore(); refreshUI();
+      log('No cloud save found. Using fresh game.');
+      return;
+    }
+    // merge loaded player
+    const p = data.player || {};
+    Object.assign(player, {
+      x: p.x ?? player.x,
+      y: p.y ?? player.y,
+      hp: p.hp ?? player.hp,
+      maxHp: p.maxHp ?? player.maxHp,
+      atk: p.atk ?? player.atk,
+      mag: p.mag ?? player.mag,
+      spd: p.spd ?? player.spd,
+      lvl: p.lvl ?? player.lvl,
+      xp: p.xp ?? player.xp,
+      gold: p.gold ?? player.gold,
+      statPoints: p.statPoints ?? player.statPoints,
+      stats: p.stats ?? player.stats,
+      inventory: p.inventory ?? player.inventory,
+      equip: p.equip ?? player.equip,
+      mode: p.mode ?? player.mode
+    });
+    // world
+    currentLevel = data.world?.currentLevel ?? currentLevel;
+    currentLayer = data.world?.currentLayer ?? currentLayer;
+    enemies = data.world?.enemies ?? enemies;
+    worldObjects = data.world?.worldObjects ?? worldObjects;
+    applyEquip(); renderInventory(); renderStore(); refreshUI(); log('Loaded cloud save.');
+  }catch(err){ console.error(err); log('Failed to load cloud save.'); }
+}
+
+// ---------- Game over handling ----------
+document.getElementById('goHome').onclick = ()=>{ auth.signOut().then(()=>{ window.location.href = 'login.html'; }); };
+
+// ---------- Main update & draw ----------
 function update(dt){
-  if(paused) return;
-  // admin infinite stats
-  const isAdmin = currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL;
-  if(isAdmin){
-    player.hp = player.maxHp = 999999;
-    player.mana = player.maxMana = 999999;
-    player.coins = 9999999;
-    player.xp = 9999999;
-    player.atkCD = 0; player.dashCD = 0;
-  } else {
-    player.mana = clamp(player.mana + 25*dt, 0, player.maxMana);
-  }
-
-  // movement input
-  const left = keys['arrowleft']||keys['a'], right = keys['arrowright']||keys['d'];
-  const upKey = keys['arrowup']||keys['w']||keys[' '];
-  if(left){ player.vx = -player.speed; player.facing = -1; } else if(right){ player.vx = player.speed; player.facing = 1; } else { player.vx = player.vx * 0.8; if(Math.abs(player.vx) < 5) player.vx = 0; }
-  if(upKey && player.onGround){ player.vy = -player.jump; player.onGround = false; }
-
-  player.vy += 1400 * dt;
-  player.atkCD = Math.max(0, player.atkCD - dt);
-  player.dashCD = Math.max(0, player.dashCD - dt);
-  player.x += player.vx * dt;
-  player.y += player.vy * dt;
-
-  const m = maps[currentLevel-1];
-  // collisions with tiles
-  player.onGround = false;
-  for(const t of m.tiles){
-    if(rectOverlap(player, t)){
-      if(player.vy > 0 && (player.y + player.h) - t.y < 34){
-        player.y = t.y - player.h; player.vy = 0; player.onGround = true;
-      } else if(player.vy < 0){
-        player.vy = 0; player.y = t.y + t.h + 0.1;
-      } else {
-        if(player.x < t.x) player.x = t.x - player.w - 0.1; else player.x = t.x + t.w + 0.1;
-        player.vx = 0;
+  let mvx=0,mvy=0;
+  if(keys['w']||keys['ArrowUp']) mvy -=1;
+  if(keys['s']||keys['ArrowDown']) mvy +=1;
+  if(keys['a']||keys['ArrowLeft']) mvx -=1;
+  if(keys['d']||keys['ArrowRight']) mvx +=1;
+  if(touchTarget){ const dx=touchTarget.x-player.x, dy=touchTarget.y-player.y; const L=Math.hypot(dx,dy)||1; player.x += (dx/L) * player.spd * dt; player.y += (dy/L) * player.spd * dt; } else { const len=Math.hypot(mvx,mvy)||1; if(mvx||mvy){ player.x += (mvx/len)*player.spd*dt; player.y += (mvy/len)*player.spd*dt; lastFacing.x = mvx/len; lastFacing.y = mvy/len; player.facing = {...lastFacing}; } }
+  // collisions with objects (player)
+  for(const obj of worldObjects){
+    if(obj.type==='tree' || obj.type==='rock'){
+      const rx = obj.x, ry = obj.y, rr = (obj.size/2) + Math.max(player.w,player.h)/2;
+      if(Math.hypot(player.x - rx, player.y - ry) < rr){
+        const dx = player.x - rx, dy = player.y - ry; const L=Math.hypot(dx,dy)||1;
+        player.x = rx + (dx/L) * rr; player.y = ry + (dy/L) * rr;
+      }
+    } else if(obj.type==='house'){
+      const rx = obj.x - obj.w/2, ry = obj.y, rw = obj.w, rh = obj.h;
+      const closestX = clamp(player.x, rx, rx+rw); const closestY = clamp(player.y, ry, ry+rh);
+      const dx = player.x - closestX, dy = player.y - closestY;
+      if(dx*dx + dy*dy < Math.pow(Math.max(player.w,player.h)/2,2)){
+        const pushX = dx||1, pushY = dy||1; const L=Math.hypot(pushX,pushY)||1;
+        player.x += (pushX/L)*6; player.y += (pushY/L)*6;
       }
     }
   }
-
-  const levelWidthPx = m.wTiles * TILE;
-  player.x = clamp(player.x, 8, levelWidthPx - player.w - 8);
-  player.y = clamp(player.y, -400, H - player.h + 80);
-
-  // pickups
-  for(let i=pickups.length-1;i>=0;i--){
-    const p = pickups[i];
-    if(rectOverlap(player, {x:p.x,y:p.y,w:24,h:24})){
-      if(p.type==='coin'){ player.coins++; player.xp += 5; }
-      else { player.pots++; player.hp = clamp(player.hp + 40, 0, player.maxHp); }
-      pickups.splice(i,1); log('Picked up '+p.type);
+  // projectiles & fx
+  projectilesUpdate(dt); attackFXUpdate(dt);
+  // enemies update
+  for(const e of enemies.slice()) enemyUpdate(e, dt);
+  // spawn logic
+  lastSpawn += dt;
+  const spawnInterval = Math.max(0.6, 2.5 - currentLevel*0.02);
+  if(lastSpawn > spawnInterval){
+    const cap = clamp(4 + Math.floor(currentLevel/3) + Math.floor(currentLayer/2), 6, 24);
+    if(enemies.length < cap) spawnEnemy(currentLayer, false);
+    lastSpawn = 0;
+  }
+  // progression & boss spawn logic
+  if(enemies.length === 0){
+    currentLayer++;
+    if(currentLayer > layersFor(currentLevel)){
+      spawnEnemy(currentLayer, true);
+      log('Boss spawned for level ' + currentLevel);
+    } else {
+      generateWorld(currentLayer);
+      log('Entering layer '+currentLayer);
     }
+    document.getElementById('levelInfo').textContent = `Level ${currentLevel} • Layer ${currentLayer}/${layersFor(currentLevel)}`;
   }
-
-  // projectiles
-  for(let i=projectiles.length-1;i>=0;i--){
-    const pr = projectiles[i];
-    if(pr.vx) pr.x += pr.vx * dt;
-    if(pr.vy) pr.y += pr.vy * dt;
-    pr.life -= dt;
-    if(pr.life <= 0){ projectiles.splice(i,1); continue; }
-    for(let j=ents.length-1;j>=0;j--){
-      const en = ents[j];
-      if(rectOverlap(pr, {x:en.x,y:en.y,w:en.w,h:en.h})){
-        en.hp -= pr.dmg || 20;
-        for(let k=0;k<6;k++) particles.push({x:pr.x+rand(-6,6),y:pr.y+rand(-6,6),vx:rand(-80,80),vy:rand(-80,80),life:0.4,col:'rgba(255,200,120,0.95)'});
-        projectiles.splice(i,1);
-        if(en.hp <= 0){
-          player.xp += (en.type==='boss'? 300 : 12 + Math.floor(currentLevel/4));
-          player.coins += en.type==='boss'? 15 : 2 + rand(0,2);
-          if(Math.random() < 0.45) pickups.push({x:en.x, y:en.y, type:'coin'});
-          ents.splice(j,1);
-        }
-        break;
-      }
-    }
+  if(currentLayer > layersFor(currentLevel)){
+    currentLevel = Math.min(MAX_LEVEL, currentLevel + 1);
+    currentLayer = 1;
+    generateWorld(currentLayer);
+    log('Advanced to Level ' + currentLevel);
+    player.gold += 50 + Math.floor(currentLevel*8);
+    document.getElementById('levelInfo').textContent = `Level ${currentLevel} • Layer ${currentLayer}/${layersFor(currentLevel)}`;
   }
-
-  // enemies AI (area-limited)
-  for(const en of ents){
-    en.timer = (en.timer||0) + dt;
-    const areaActive = (en.areaId === 0) || (Math.abs(player.x - en.x) < canvas.width * 0.9 && player.y < en.y + TILE*4);
-    if(!areaActive) continue;
-
-    if(en.type === 'basic'){
-      const dir = (player.x > en.x) ? 1 : -1; en.x += dir * en.vx * dt; if(rectOverlap(player,en)) player.hp -= 20 * dt;
-    } else if(en.type === 'fast'){
-      const dir = (player.x > en.x) ? 1 : -1; en.x += dir * (en.vx*1.6) * dt; if(rectOverlap(player,en)) player.hp -= 28 * dt;
-    } else if(en.type === 'ranged'){
-      if(en.timer > 1.2){ en.timer = 0; const dx = player.x - en.x, dy = player.y - en.y; const mag = Math.hypot(dx,dy)||1; const vx = (dx/mag) * 160, vy = (dy/mag) * 160; projectiles.push({x:en.x, y:en.y+6, w:10, h:10, vx:vx, vy:vy, life:3.0, dmg:14, source:'enemy'}); }
-    } else if(en.type === 'tank'){
-      const dir = (player.x > en.x) ? 1 : -1; en.x += dir * (en.vx*0.6) * dt; if(rectOverlap(player,en)) player.hp -= 40 * dt;
-    } else if(en.type === 'ghost'){
-      const dir = (player.x > en.x) ? 1 : -1; en.x += dir * (en.vx*1.1) * dt; en.y += Math.sin(now()+en.x)*6*dt; if(rectOverlap(player,en)) player.hp -= 18 * dt;
-    } else if(en.type === 'boss'){
-      if(en.timer > 2.5){ en.timer = 0; for(let a=0;a<14;a++){ const ang = a*(Math.PI*2/14); projectiles.push({x:en.x+en.w/2, y:en.y+en.h/2, w:10, h:10, vx:Math.cos(ang)*160, vy:Math.sin(ang)*160, life:2.4, dmg:26, source:'boss'}); } }
-      const dir = (player.x > en.x) ? 1 : -1; en.x += dir * (en.vx*0.5) * dt; if(rectOverlap(player,en)) player.hp -= 60 * dt;
-    }
-  }
-
-  // particles
-  for(let i=particles.length-1;i>=0;i--){ const p = particles[i]; p.x += (p.vx||0)*dt; p.y += (p.vy||0)*dt; p.vy += 300*dt; p.life -= dt; if(p.life<=0) particles.splice(i,1); }
-
-  // occasional spawns
-  const m2 = maps[currentLevel-1];
-  if(!m2.boss && ents.length < Math.max(3, Math.floor(m2.enemies.length/4)) && Math.random() < 0.01){
-    ents.push(spawnEnemy({x: rand(8,m2.wTiles-3)*TILE, y: H - TILE*3, type: ['basic','fast','ranged','tank','ghost'][rand(0,4)], areaId:0, patrolMin:null, patrolMax:null}));
-  }
-
-  // exit check
-  if(player.x > m.exit.x){
-    if(m.boss && ents.find(e=>e.type==='boss')){ /* require boss defeat */ }
-    else if(currentLevel < MAX_LEVELS) loadLevel(currentLevel+1);
-  }
-
-  // death
-  const isAdmin = currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL;
-  if(player.hp <= 0 && !isAdmin){
-    log('You died on Level '+currentLevel);
-    submitScore();
-    player.hp = player.maxHp; player.xp = Math.max(0, player.xp - 20); player.coins = Math.max(0, player.coins - 5);
-    loadLevel(currentLevel);
-  }
-
-  updateUI();
+  checkLevelUp();
 }
-
-/* ---------------- draw ---------------- */
 function draw(){
-  ctx.clearRect(0,0,W,H);
-  const m = maps[currentLevel-1];
-  // sky gradient
-  const g = ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0b2731'); g.addColorStop(1,'#021018'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  // parallax
-  ctx.fillStyle='rgba(0,20,30,0.6)'; for(let i=0;i<6;i++){ const px = ((i*300) - ((player.x/4) % 300)); ctx.fillRect(px, 60 + i*6, 260, 80); }
-
-  const camX = clamp(player.x - (W/2 - 140), 0, Math.max(0, m.wTiles * TILE - W));
-
-  // tiles / islands
-  for(const t of m.tiles){
-    const dx = t.x - camX; if(dx + t.w < -120 || dx > W+120) continue;
-    if(IMGS.tileGrass && IMGS.tileGrass.complete) ctx.drawImage(IMGS.tileGrass,0,0,32,32,dx,t.y,t.w,t.h);
-    else { ctx.fillStyle = (t.areaId===0? '#274B2F' : '#2b3b2e'); ctx.fillRect(dx,t.y,t.w,t.h); }
-  }
-
-  // islands shadows
-  for(const isl of m.islands || []){ const dx = isl.x - camX; ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(dx, isl.y + isl.h, isl.w, 6); }
-
-  // pickups
-  for(const p of pickups){
-    const dx = p.x - camX; if(dx < -50 || dx > W+50) continue;
-    const img = p.type==='coin' ? IMGS.coin : IMGS.potion;
-    if(img && img.complete) ctx.drawImage(img, dx, p.y, 24, 24);
-    else { ctx.fillStyle = p.type==='coin' ? '#ffd24a' : '#ff4b8b'; ctx.fillRect(dx,p.y,18,18); }
-  }
-
-  // enemies
-  for(const e of ents){
-    const dx = e.x - camX; if(dx < -200 || dx > W+200) continue;
-    if(e.type==='boss'){ if(IMGS.boss && IMGS.boss.complete) ctx.drawImage(IMGS.boss,dx,e.y,e.w*2,e.h*2); else { ctx.fillStyle='#aa4444'; ctx.fillRect(dx,e.y,e.w*2,e.h*2); } }
-    else {
-      const img = (e.type==='fast'||e.type==='tank')? IMGS.enemyB : (e.type==='ghost'?IMGS.enemyC:IMGS.enemyA);
-      if(img && img.complete) ctx.drawImage(img,dx,e.y,e.w,e.h); else { ctx.fillStyle='#994444'; ctx.fillRect(dx,e.y,e.w,e.h); }
-    }
-    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(dx,e.y-8,e.w,6);
-    ctx.fillStyle='rgba(255,80,80,0.9)'; ctx.fillRect(dx, e.y-8, clamp((e.hp/(e.type==='boss'? (e.hp||300) : 60))*e.w, 0, e.w), 6);
-  }
-
-  // player
-  const px = player.x - camX;
-  const pimg = (player.class==='mage')? IMGS.playerMage : IMGS.playerSword;
-  if(pimg && pimg.complete){ ctx.save(); ctx.translate(px + player.w/2, player.y + player.h/2); if(player.facing<0) ctx.scale(-1,1); ctx.drawImage(pimg, -player.w/2, -player.h/2, player.w, player.h); ctx.restore(); }
-  else { ctx.fillStyle='#ffdede'; ctx.fillRect(px, player.y, player.w, player.h); }
-
-  // projectiles
-  for(const pr of projectiles){ const dx = pr.x - camX; ctx.fillStyle = pr.source==='mage' ? 'rgba(150,180,255,0.95)' : (pr.source==='enemy'||pr.source==='boss') ? 'rgba(255,140,120,0.95)': 'rgba(255,210,160,0.95)'; ctx.fillRect(dx, pr.y, pr.w, pr.h); }
-
-  // particles
-  for(const p of particles){ ctx.fillStyle = p.col || 'rgba(255,255,255,0.9)'; ctx.fillRect(p.x - camX, p.y, 3, 3); }
-
-  // HUD
-  ctx.fillStyle='rgba(0,0,0,0.38)'; ctx.fillRect(8, H-56, 640, 40);
-  ctx.fillStyle='#ffdede'; ctx.font='14px Inter, sans-serif';
-  ctx.fillText(`Level ${currentLevel}  HP:${Math.round(player.hp)}  Mana:${Math.round(player.mana)}  XP:${Math.round(player.xp)}  Coins:${player.coins}`, 20, H-30);
+  drawGround();
+  for(const obj of worldObjects){ if(obj.type==='tree') drawTree(obj); else if(obj.type==='rock') drawRock(obj); else if(obj.type==='house') drawHouse(obj); }
+  for(const e of enemies) drawEnemy(e);
+  drawPlayer(); for(const p of projectiles) drawProjectile(p); for(const fx of attackFX) drawAttackFX(fx);
+}
+function gameLoop(ts){
+  const dt = Math.min(0.05, (ts - lastTick)/1000);
+  update(dt); draw(); lastTick = ts; requestAnimationFrame(gameLoop);
 }
 
-/* ----- game loop ----- */
-let lastT = now();
-function loop(){
-  const t = now(); let dt = t - lastT; lastT = t; if(dt>0.06) dt=0.06;
-  update(dt); draw();
-  uiLevel.textContent = currentLevel; uiEnemies.textContent = ents.length;
-  requestAnimationFrame(loop);
+// ---------- UI & helpers ----------
+function refreshUI(){
+  document.getElementById('hpText').textContent = `${Math.round(player.hp)}/${player.maxHp}`;
+  document.getElementById('hpBar').style.width = `${Math.max(0,(player.hp/player.maxHp)*100)}%`;
+  const equipAtk = player.equip.weapon?.atk || 0; const equipMag = player.equip.weapon?.mag || 0;
+  document.getElementById('atkText').textContent = player.atk + equipAtk;
+  document.getElementById('magText').textContent = player.mag + equipMag;
+  document.getElementById('spdText').textContent = Math.round(player.spd + player.stats.spd * 4);
+  const xpForNext = 100 + (player.lvl - 1)*60;
+  document.getElementById('xpText').textContent = `${Math.round(player.xp)}/${xpForNext}`;
+  document.getElementById('playerLevel').textContent = player.lvl;
+  document.getElementById('goldText').textContent = player.gold;
+  document.getElementById('statPoints').textContent = player.statPoints;
+  document.getElementById('statStr').textContent = player.stats.str;
+  document.getElementById('statMag').textContent = player.stats.mag;
+  document.getElementById('statDef').textContent = player.stats.def;
+  document.getElementById('statSpd').textContent = player.stats.spd;
+  renderInventory(); renderStore();
 }
 
-/* ---------------- Firebase auth & DB ---------------- */
-let currentUser = null;
-auth.onAuthStateChanged(u=>{
-  currentUser = u;
-  if(u){
-    uiName.textContent = u.displayName || u.email || ('User-'+u.uid.slice(0,6));
-    log('Signed in: '+uiName.textContent + (u.email?(' ('+u.email+')'):''));
-    if(u.email && u.email.toLowerCase() === ADMIN_EMAIL){ adminBadge.innerHTML = '<span class="badge">ADMIN</span>'; log('Admin enabled'); }
-    else adminBadge.innerHTML = '';
-    // try loading player record automatically (if exists)
-    db.ref('players/'+u.uid).once('value').then(snap=>{
-      const v = snap.val();
-      if(v){
-        player.class = v.class || player.class; player.hp = v.hp || player.hp; player.mana = v.mana || player.mana;
-        player.xp = v.xp || player.xp; player.lvl = v.lvl || player.lvl; player.coins = v.coins || player.coins; player.pots = v.pots || player.pots;
-        loadLevel(v.level || 1); if(v.x) player.x = v.x; if(v.y) player.y = v.y;
-        updateUI(); log('Player data loaded from DB.');
-      } else {
-        // create record
-        const isAdmin = (u.email && u.email.toLowerCase() === ADMIN_EMAIL);
-        const initial = { name: u.displayName || 'Player', email: u.email || null, class: player.class, hp: isAdmin ? 999999 : player.hp, mana: isAdmin ? 999999 : player.mana, xp: player.xp, lvl: player.lvl, coins: player.coins, pots: player.pots, level: currentLevel, createdAt: Date.now() };
-        db.ref('players/'+u.uid).set(initial).then(()=>log('Created player record'));
-      }
-    }).catch(e=>log('DB load error: '+e.message));
-    loadScores();
-  } else {
-    uiName.textContent = 'Guest';
-    adminBadge.innerHTML = '';
-    log('Not signed in — sign in to save progress.');
-  }
-});
-
-/* buttons */
-btnSave.addEventListener('click', ()=> savePlayer(true));
-btnLoad.addEventListener('click', ()=> loadPlayer());
-btnSignOut.addEventListener('click', ()=> { auth.signOut().then(()=>{ window.location.href = 'index.html'; }); });
-
-function savePlayer(showLog){
-  if(!currentUser){ log('Sign in to save'); return; }
-  const payload = { name: uiName.textContent, class: player.class, hp: Math.round(player.hp), mana: Math.round(player.mana), xp: player.xp, lvl: player.lvl, coins: player.coins, pots: player.pots, level: currentLevel, x: Math.round(player.x), y: Math.round(player.y), ts: Date.now() };
-  db.ref('players/'+currentUser.uid).set(payload).then(()=>{ if(showLog) log('Saved progress'); }).catch(e=>log('Save error: '+e.message));
+// ---------- Init ----------
+function initLocal(){
+  applyEquip(); generateWorld(currentLayer);
+  for(let i=0;i<4;i++) spawnEnemy(1,false);
+  renderStore(); renderInventory(); refreshUI();
+  if(window.innerWidth < 800) {/* show touch controls if implemented */ }
+  requestAnimationFrame(gameLoop);
 }
-function loadPlayer(){
-  if(!currentUser){ log('Sign in to load'); return; }
-  db.ref('players/'+currentUser.uid).once('value').then(snap=>{
-    const v = snap.val(); if(!v){ log('No saved data'); return; }
-    player.class = v.class || player.class; player.hp = v.hp || player.hp; player.mana = v.mana || player.mana; player.xp = v.xp || player.xp; player.lvl = v.lvl || player.lvl; player.coins = v.coins || player.coins; player.pots = v.pots || player.pots;
-    loadLevel(v.level || 1); if(v.x) player.x = v.x; if(v.y) player.y = v.y; uiClass.textContent = (player.class==='sword') ? 'Swordmaster' : 'Mage';
-    log('Progress loaded');
-  }).catch(e=>log('Load error: '+e.message));
-}
+initLocal();
+setInterval(()=>{ refreshUI(); }, 700);
 
-/* high scores */
-function submitScore(){
-  if(!currentUser) return;
-  const entry = { name: uiName.textContent, score: Math.round(player.xp), ts: Date.now() };
-  db.ref('scores').push(entry).then(()=>loadScores()).catch(e=>log('Score push error'));
-}
-function loadScores(){
-  scoresEl.innerHTML = '<li>loading...</li>';
-  db.ref('scores').orderByChild('score').limitToLast(10).once('value').then(snap=>{
-    const arr=[]; snap.forEach(s=>arr.push(s.val())); arr.sort((a,b)=>b.score-a.score); scoresEl.innerHTML=''; arr.forEach(a=>{ const li=document.createElement('li'); li.textContent = (a.name||'Anon')+': '+a.score; scoresEl.appendChild(li); });
-    if(arr.length===0) scoresEl.innerHTML = '<li>No scores</li>';
-  }).catch(e=>{ scoresEl.innerHTML = '<li>failed</li>'; console.warn(e); });
-}
+// ---------- Cloud save/load buttons ----------
+document.getElementById('saveCloud').onclick = ()=>{ saveToCloud(); };
+document.getElementById('loadCloud').onclick = ()=>{ loadFromCloud(); };
 
-/* update UI */
-function updateUI(){
-  uiHP.textContent = Math.round(player.hp);
-  uiMana.textContent = Math.round(player.mana);
-  uiXP.textContent = Math.round(player.xp);
-  uiPLvl.textContent = player.lvl;
-  uiCoins.textContent = player.coins;
-  uiPots.textContent = player.pots;
-  uiClass.textContent = (player.class==='sword') ? 'Swordmaster' : 'Mage';
-}
-
-/* debug */
-window.addEventListener('keydown', e=>{ if(e.key==='F8'){ player.xp += 100; updateUI(); log('Debug +100 XP'); } });
-
-/* preload assets & start */
-preload(()=>{
-  // ensure bosses exist
-  for(let L=1; L<=MAX_LEVELS; L++){
-    if(L % BOSS_EVERY === 0){
-      const m = maps[L-1];
-      m.enemies = [{x:(m.wTiles-8)*TILE, y:H - TILE*4 - 40, type:'boss', hp: 200 + L*50, areaId:0}];
-    }
-  }
-  loading.style.display = 'none';
-  lastT = now();
-  loop();
-  log('Game ready — press V to switch class. Sign in to save progress.');
-});
-
-/* save on unload */
-window.addEventListener('beforeunload', ()=>{ if(currentUser) savePlayer(false); });
-
+// ---------- End of script ----------
 </script>
 </body>
 </html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPG Game Login</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #1a1a1a, #000);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        flex-direction: column;
+    }
+    h1 {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+    }
+    button {
+        padding: 15px 25px;
+        font-size: 1.1em;
+        border: none;
+        border-radius: 8px;
+        background: #ff4444;
+        color: white;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    button:hover {
+        background: #cc0000;
+    }
+</style>
+</head>
+<body>
+
+<h1>RPG Game Login</h1>
+<button id="googleLogin">Login with Google</button>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+    // Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBF-h6Ka-jU8Cd3xpaHTT-UtNBO3aDQWZU",
+      authDomain: "rpg-game-ff3f9.firebaseapp.com",
+      databaseURL: "https://rpg-game-ff3f9-default-rtdb.firebaseio.com",
+      projectId: "rpg-game-ff3f9",
+      storageBucket: "rpg-game-ff3f9.firebasestorage.app",
+      messagingSenderId: "212932693152",
+      appId: "1:212932693152:web:dbdeef096a87a7c1de0dc5",
+      measurementId: "G-JLX6YH0YFY"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // Login button click
+    document.getElementById("googleLogin").addEventListener("click", () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider)
+        .then((result) => {
+            const user = result.user;
+
+            // Save user info to DB if first time
+            database.ref("users/" + user.uid).once("value").then(snapshot => {
+                if (!snapshot.exists()) {
+                    database.ref("users/" + user.uid).set({
+                        name: user.displayName,
+                        email: user.email,
+                        photo: user.photoURL,
+                        createdAt: Date.now(),
+                        level: 1,
+                        stats: { hp: 100, mp: 50, atk: 10, def: 5 }
+                    });
+                }
+            });
+
+            // Redirect to game
+            window.location.href = "game.html";
+        })
+        .catch((error) => {
+            console.error("Login Error:", error);
+            alert("Login failed. Please try again.");
+        });
+    });
+</script>
+
+</body>
+</html>
