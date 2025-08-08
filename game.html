@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hell's Gate — Web RPG (Logged In)</title>
+<title>Hell's Gate — Full 2D Web RPG (Game)</title>
 <style>
 :root{
   --bg:#071019; --panel:#0f1720; --accent:#e14b3b; --muted:#9fb0c8;
@@ -40,7 +40,7 @@ canvas{width:100%;height:calc(100vh - 260px);display:block;border-radius:10px;ba
   color:white; font-size:20px; flex-direction:column;
 }
 #gameOverOverlay .box{background:rgba(10,10,10,0.9); padding:22px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); text-align:center}
-a.linkBtn{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);text-decoration:none;color:white}
+.linkBtn{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);text-decoration:none;color:white;cursor:pointer}
 @media(max-width:900px){
   canvas{height:44vh}
   .layout{flex-direction:column}
@@ -53,12 +53,12 @@ a.linkBtn{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:8p
 <body>
 <div class="app">
   <div class="header">
-    <div class="brand">Hell's Gate — Web RPG (Online)</div>
+    <div class="brand">Hell's Gate — Full 2D RPG (Game)</div>
     <div class="controls">
       <div id="userArea" class="userChip small"><img id="userPic" src="" alt="" style="display:none"><span id="userName">Guest</span></div>
       <button id="btnSignOut" class="btn">Sign out</button>
-      <button id="saveCloud" class="btn">Save to Cloud</button>
-      <button id="loadCloud" class="btn">Load from Cloud</button>
+      <button id="saveCloud" class="btn">Save</button>
+      <button id="loadCloud" class="btn">Load</button>
     </div>
   </div>
 
@@ -93,9 +93,9 @@ a.linkBtn{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:8p
         <div class="row"><div>Speed</div><div id="spdText">140</div></div>
         <div class="row"><div>XP</div><div id="xpText">0/100</div></div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-          <button id="attackLightBtn" class="btn">Light</button>
-          <button id="attackHeavyBtn" class="btn">Heavy</button>
-          <button id="attackMagicBtn" class="btn">Magic</button>
+          <button id="attackLightBtn" class="btn">Light (Space)</button>
+          <button id="attackHeavyBtn" class="btn">Heavy (Enter)</button>
+          <button id="attackMagicBtn" class="btn">Magic (M)</button>
           <button id="attackComboBtn" class="btn">Combo</button>
         </div>
       </div>
@@ -130,29 +130,28 @@ a.linkBtn{display:inline-block;margin-top:12px;padding:8px 12px;border-radius:8p
     </div>
   </div>
 
-  <div class="footer small">Logged-in mode. Your progress will be saved to your Google account (Realtime DB) when you press Save to Cloud.</div>
+  <div class="footer small">Open on desktop or mobile. Controls: WASD/Arrows, Space=Light, Enter=Heavy, M=Magic, Q=Toggle mode.</div>
 </div>
 
 <!-- Game Over overlay -->
-<div id="gameOverOverlay"><div class="box"><div id="gameOverText">You died — Game Over</div><a class="linkBtn" id="goHome">Return to Login</a></div></div>
+<div id="gameOverOverlay"><div class="box"><div id="gameOverText">You died — Game Over</div><div style="margin-top:12px"><button id="respawnBtn" class="linkBtn">Respawn (Lose 20 Gold)</button> <button id="logoutBtn" class="linkBtn">Sign out</button></div></div></div>
 
-<!-- Firebase compat SDKs (matching login.html) -->
+<!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
 /*
-  game.html — connected to Firebase Auth & Realtime DB (compat)
-  - Requires the user to be signed in (redirects to login.html if not)
-  - Loads /users/{uid}/save into the game state
-  - Save to cloud writes to /users/{uid}/save
-  - Sign out returns to login.html
+  Full single-file game.html — connected to Firebase.
+  - Requires login.html for sign-in (redirects to it if not signed-in).
+  - Uses provided Firebase config (ensure it's correct).
+  - Game includes environment, collisions (trees/houses), light/heavy/magic/combo attacks, combo detection,
+    enemy AI, bosses, level/layer progression, save/load to Realtime Database, and game over/respawn.
 */
 
-// ---------- Firebase config (provided) ----------
+/* ---------- Firebase configuration (use your config) ---------- */
 const firebaseConfig = {
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   apiKey: "AIzaSyBF-h6Ka-jU8Cd3xpaHTT-UtNBO3aDQWZU",
   authDomain: "rpg-game-ff3f9.firebaseapp.com",
   databaseURL: "https://rpg-game-ff3f9-default-rtdb.firebaseio.com",
@@ -162,48 +161,49 @@ const firebaseConfig = {
   appId: "1:212932693152:web:dbdeef096a87a7c1de0dc5",
   measurementId: "G-JLX6YH0YFY"
 };
-
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const rtdb = firebase.database();
 
-// ---------- Auth check & UI ----------
+/* ---------- Auth & redirect ---------- */
 const userNameEl = document.getElementById('userName');
 const userPicEl = document.getElementById('userPic');
 const btnSignOut = document.getElementById('btnSignOut');
-btnSignOut.onclick = ()=>{ auth.signOut().then(()=>{ window.location.href = 'login.html'; }); };
+const saveCloudBtn = document.getElementById('saveCloud');
+const loadCloudBtn = document.getElementById('loadCloud');
 
+btnSignOut.onclick = ()=>{ auth.signOut().then(()=>{ window.location.href = 'login.html'; }); };
+saveCloudBtn.onclick = saveToCloud;
+loadCloudBtn.onclick = loadFromCloud;
+
+let localUser = null;
 auth.onAuthStateChanged(async (user)=>{
-  if(!user){ // not signed in -> redirect to login
-    window.location.href = 'login.html';
-    return;
-  }
-  // signed in: show profile
+  if(!user){ window.location.href = 'login.html'; return; }
+  localUser = user;
   userNameEl.textContent = user.displayName || 'Player';
-  if(user.photoURL){ userPicEl.src = user.photoURL; userPicEl.style.display = ''; } else userPicEl.style.display = 'none';
+  if(user.photoURL){ userPicEl.src = user.photoURL; userPicEl.style.display = ''; }
   document.getElementById('playerId').textContent = user.uid.slice(0,8);
-  // load saved data
   await loadFromCloud();
 });
 
-// ---------- Game code (adapted from previous full game) ----------
+/* ---------- Canvas & utilities ---------- */
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 let W = canvas.width, H = canvas.height;
-function resizeCanvas(){ const ratio=W/H; const maxW=Math.min(window.innerWidth-40,1400); let newW=Math.min(maxW,W); let newH=Math.floor(newW/ratio); if(window.innerWidth<900){ newW=window.innerWidth-32; newH=Math.floor(newW/ratio);} canvas.style.width=newW+'px'; canvas.style.height=newH+'px'; }
+function resizeCanvas(){ const ratio = W/H; const maxW = Math.min(window.innerWidth-40, 1400); let newW = Math.min(maxW,W); let newH = Math.floor(newW/ratio); if(window.innerWidth<900){ newW = window.innerWidth - 32; newH = Math.floor(newW/ratio); } canvas.style.width = newW + 'px'; canvas.style.height = newH + 'px'; }
 window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
-const rand = (a,b)=> Math.random()*(b-a)+a;
-const clamp = (v,a,b)=> Math.max(a,Math.min(b,v));
+const rand = (a,b) => Math.random()*(b-a)+a;
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
 const now = ()=> performance.now();
 function formatTime(){ return new Date().toLocaleTimeString(); }
-function log(msg){ const el=document.getElementById('log'); const d=document.createElement('div'); d.textContent=`[${formatTime()}] ${msg}`; el.prepend(d); if(el.childNodes.length>400) el.removeChild(el.lastChild); }
+function log(msg){ const el=document.getElementById('log'); const d=document.createElement('div'); d.textContent = `[${formatTime()}] ${msg}`; el.prepend(d); if(el.childNodes.length>400) el.removeChild(el.lastChild); }
 
-// Game state
+/* ---------- Game state ---------- */
 const MAX_LEVEL = 100;
 let currentLevel = 1;
 let currentLayer = 1;
-function layersFor(level){ return 5 + (level - 1); }
+function layersFor(l){ return 5 + (l - 1); }
 
 const player = {
   x: W/2, y: H/2, w:28, h:36,
@@ -211,19 +211,19 @@ const player = {
   lvl:1, xp:0, gold:0, statPoints:0,
   stats:{str:1,mag:1,def:1,spd:1},
   inventory:[], equip:{weapon:null,armor:null,artifact:null},
-  mode:'sword', // 'sword' | 'magic'
+  mode:'sword',
   facing:{x:0,y:-1}
 };
 
-let worldObjects = [];
-let enemies = [];
-let projectiles = [];
-let attackFX = [];
+let worldObjects = []; // trees, rocks, houses
+let enemies = [];      // enemy entities
+let projectiles = [];  // magic projectiles
+let attackFX = [];     // visual fx
 let lastTick = now();
 let lastSpawn = 0;
-let localUser = null; // Firebase user
+let comboQueue = [];   // input combo buffer
 
-// store items
+/* ---------- Store items ---------- */
 const STORE_ITEMS = [
   { id:'sword_bronze', name:'Bronze Sword', type:'weapon', atk:4, mag:0, price:60 },
   { id:'staff_wood', name:'Novice Staff', type:'weapon', atk:0, mag:5, price:70 },
@@ -231,7 +231,7 @@ const STORE_ITEMS = [
   { id:'artifact_ring', name:'Ring of Fortune', type:'artifact', price:150, bonus:{goldMult:1.05} }
 ];
 
-// Procedural generation
+/* ---------- Procedural world ---------- */
 function generateWorld(layer){
   worldObjects = [];
   const density = clamp(5 + Math.floor(layer/2), 5, 24);
@@ -244,18 +244,41 @@ function generateWorld(layer){
   }
 }
 
-// Drawing helpers
-function drawGround(){ const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#163e1f'); g.addColorStop(1,'#0f2b16'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); for(let i=0;i<160;i++){const x=(i*97)%W,y=(i*43)%H;ctx.fillStyle=(i%2? '#2e7d32':'#287a3a');ctx.fillRect(x,y+20,2,6+(i%3));}}
-function drawTree(t){ ctx.fillStyle='#6b3f22'; ctx.fillRect(t.x-(t.size/6), t.y, t.size/3, t.size*0.9); ctx.fillStyle='#1f7a2a'; ctx.beginPath(); ctx.ellipse(t.x, t.y - t.size*0.2, t.size*0.9, t.size, 0,0,Math.PI*2); ctx.fill(); }
+/* ---------- Drawing helpers ---------- */
+function drawGround(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#163e1f'); g.addColorStop(1,'#0f2b16');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<160;i++){ const x=(i*97)%W,y=(i*43)%H; ctx.fillStyle=(i%2? '#2e7d32':'#287a3a'); ctx.fillRect(x,y+20,2,6+(i%3)); }
+}
+function drawTree(t){
+  ctx.fillStyle = '#6b3f22'; ctx.fillRect(t.x - (t.size/6), t.y, t.size/3, t.size*0.9);
+  ctx.fillStyle = '#1f7a2a'; ctx.beginPath(); ctx.ellipse(t.x, t.y - t.size*0.2, t.size*0.9, t.size, 0,0,Math.PI*2); ctx.fill();
+}
 function drawRock(r){ ctx.fillStyle='#6b6b6b'; ctx.beginPath(); ctx.ellipse(r.x, r.y, r.size, r.size*0.7, 0,0,Math.PI*2); ctx.fill(); }
 function drawHouse(h){ ctx.fillStyle='#8b5a2b'; ctx.fillRect(h.x - h.w/2, h.y, h.w, h.h); ctx.fillStyle='#4a2b1b'; ctx.beginPath(); ctx.moveTo(h.x - h.w/2 - 2, h.y); ctx.lineTo(h.x, h.y - h.h*0.8); ctx.lineTo(h.x + h.w/2 + 2, h.y); ctx.fill(); ctx.fillStyle='#3b2418'; ctx.fillRect(h.x - 12, h.y + h.h - 16, 24, 16); }
 function roundRect(ctx,x,y,w,h,r,fill){ if(typeof r==='undefined') r=6; ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if(fill) ctx.fill(); }
-function drawPlayer(){ ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(0, player.h/2 + 6, player.w*0.6, player.h*0.25, 0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#ff7b7b'; roundRect(ctx, -player.w/2, -player.h/2, player.w, player.h, 6, true); ctx.fillStyle='#ffd57a'; ctx.fillRect(-player.w/4, -player.h/2 - 10, player.w/2, 8); if(player.mode==='sword'){ ctx.fillStyle='#c9b27a'; ctx.fillRect(player.w/2, -6, 10, 14);} else { ctx.fillStyle='#8ad8ff'; ctx.beginPath(); ctx.arc(0, -player.h/2 - 12, 8, 0, Math.PI*2); ctx.fill(); } ctx.restore(); }
-function drawEnemy(e){ ctx.save(); ctx.translate(e.x,e.y); ctx.fillStyle = e.isBoss ? '#ffb86b' : (e.lvl >= player.lvl ? '#ff6b6b' : '#7bd389'); roundRect(ctx, -e.w/2, -e.h/2, e.w, e.h, 6, true); ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(-e.w/2, e.h/2+6, e.w, 6); ctx.fillStyle='#ff7b7b'; const pct = Math.max(0,e.hp / e.maxHp); ctx.fillRect(-e.w/2, e.h/2+6, e.w * pct, 6); ctx.restore(); }
+function drawPlayer(){
+  ctx.save(); ctx.translate(player.x, player.y);
+  ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(0, player.h/2 + 6, player.w*0.6, player.h*0.25, 0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ff7b7b'; roundRect(ctx, -player.w/2, -player.h/2, player.w, player.h, 6, true);
+  ctx.fillStyle = '#ffd57a'; ctx.fillRect(-player.w/4, -player.h/2 - 10, player.w/2, 8);
+  if(player.mode === 'sword'){ ctx.fillStyle = '#c9b27a'; ctx.fillRect(player.w/2, -6, 10, 14); }
+  else { ctx.fillStyle = '#8ad8ff'; ctx.beginPath(); ctx.arc(0, -player.h/2 - 12, 8, 0, Math.PI*2); ctx.fill(); }
+  ctx.restore();
+}
+function drawEnemy(e){
+  ctx.save(); ctx.translate(e.x,e.y);
+  ctx.fillStyle = e.isBoss ? '#ffb86b' : (e.lvl >= player.lvl ? '#ff6b6b' : '#7bd389');
+  roundRect(ctx, -e.w/2, -e.h/2, e.w, e.h, 6, true);
+  ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.fillRect(-e.w/2, e.h/2+6, e.w, 6);
+  ctx.fillStyle='#ff7b7b'; const pct = Math.max(0,e.hp / e.maxHp); ctx.fillRect(-e.w/2, e.h/2+6, e.w * pct, 6);
+  ctx.restore();
+}
 function drawProjectile(p){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle='rgba(120,200,255,0.95)'; ctx.fill(); }
-function drawAttackFX(fx){ if(fx.type==='slash'){ ctx.save(); ctx.globalAlpha=fx.alpha; ctx.strokeStyle='rgba(255,230,160,0.95)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(fx.x,fx.y,fx.r,fx.a1,fx.a2); ctx.stroke(); ctx.restore(); } else if(fx.type==='magicBurst'){ ctx.save(); ctx.globalAlpha=fx.alpha; ctx.fillStyle='rgba(120,200,255,0.22)'; ctx.beginPath(); ctx.arc(fx.x,fx.y,fx.r,0,Math.PI*2); ctx.fill(); ctx.restore(); } }
+function drawAttackFX(fx){ if(fx.type==='slash'){ ctx.save(); ctx.globalAlpha = fx.alpha; ctx.strokeStyle='rgba(255,230,160,0.95)'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(fx.x,fx.y,fx.r,fx.a1,fx.a2); ctx.stroke(); ctx.restore(); } else if(fx.type==='magicBurst'){ ctx.save(); ctx.globalAlpha = fx.alpha; ctx.fillStyle='rgba(120,200,255,0.22)'; ctx.beginPath(); ctx.arc(fx.x,fx.y,fx.r,0,Math.PI*2); ctx.fill(); ctx.restore(); } }
 
-// ---------- Spawn & AI ----------
+/* ---------- Enemy spawn & AI ---------- */
 function spawnEnemy(layer, boss=false){
   const edge = Math.floor(rand(0,4));
   let x = rand(60, W-60), y = rand(60, H-140);
@@ -269,14 +292,14 @@ function spawnEnemy(layer, boss=false){
   const hp = boss?Math.round(250 + lvl*120):Math.round(30 + lvl*12 + rand(0,30));
   const atk = boss?Math.round(20 + lvl*6):Math.round(3 + lvl*2);
   const spd = boss?18:(30 + lvl*4 + rand(0,30));
-  enemies.push({x,y,w:size,h:size,hp,maxHp:hp,atk,spd,lvl,isBoss:boss,layer});
+  enemies.push({ x,y,w:size,h:size,hp,maxHp:hp,atk,spd,lvl,isBoss:boss,layer });
 }
 function enemyUpdate(e, dt){
   const dx = player.x - e.x, dy = player.y - e.y;
   const L = Math.hypot(dx,dy)||1;
   e.x += (dx/L) * (e.spd * dt);
   e.y += (dy/L) * (e.spd * dt);
-  // collision with world objects: bounce out
+  // enemy-object collision: simple separation
   for(const obj of worldObjects){
     if(rectCircleCollision(obj, e.x, e.y, Math.max(e.w,e.h)/2)){
       const pushX = e.x - (obj.x || 0), pushY = e.y - (obj.y || 0);
@@ -284,7 +307,7 @@ function enemyUpdate(e, dt){
       e.x += (pushX/mag) * 12 * dt; e.y += (pushY/mag) * 12 * dt;
     }
   }
-  // collision player
+  // hit player
   if(circleCollision(e.x,e.y,Math.max(e.w,e.h)/2, player.x,player.y,Math.max(player.w,player.h)/2)){
     if(!e._lastHit || now() - e._lastHit > 700){
       const dmg = Math.max(1, e.atk - (player.stats.def || 0));
@@ -295,23 +318,17 @@ function enemyUpdate(e, dt){
   }
 }
 
-// ---------- Combat ----------
+/* ---------- Combat & combos ---------- */
 function playerMelee(kind='light'){
-  // light / heavy difference
   const base = kind==='light' ? Math.round(player.atk + player.stats.str*2) : Math.round(player.atk*1.7 + player.stats.str*3);
-  // swing fx
   const angle = Math.atan2(player.facing.y, player.facing.x);
   const fx = { type:'slash', x: player.x + player.facing.x*22, y: player.y + player.facing.y*18, r: 46, a1: angle-1.0, a2: angle+1.0, alpha:1, ttl:260 };
   attackFX.push(fx);
-  // damage enemies in range
   for(const e of enemies.slice()){
     const d = Math.hypot(e.x - player.x, e.y - player.y);
-    if(d < 56){
-      e.hp -= base;
-      log(`You ${kind}-hit ${e.isBoss?'Boss':'Mob'} for ${base}.`);
-      if(e.hp <= 0) killEnemy(e);
-    }
+    if(d < 56){ e.hp -= base; log(`You ${kind}-hit ${e.isBoss?'Boss':'Mob'} for ${base}.`); if(e.hp <= 0) killEnemy(e); }
   }
+  comboQueue.push(kind==='light'?'L':'H'); attemptCombo();
 }
 function playerMagic(){
   const speed = 10;
@@ -319,25 +336,18 @@ function playerMagic(){
   const p = { x:px, y:py, vx: player.facing.x*speed, vy: player.facing.y*speed, r:10, dmg: Math.round(player.mag + player.stats.mag*2), ttl: 2600 };
   projectiles.push(p);
   attackFX.push({ type:'magicBurst', x:px, y:py, r:18, alpha:1, ttl:160 });
+  comboQueue.push('M'); attemptCombo();
 }
-let comboQueue = []; // store combos by sequence of inputs
 function attemptCombo(){
-  // Example combo: light -> light -> heavy = spinning slash (aoe)
-  // comboQueue holds last few attacks as strings: 'L' or 'H' or 'M'
   const seq = comboQueue.join('');
   if(seq.endsWith('LLH')){
-    // spinning AOE
     attackFX.push({ type:'magicBurst', x:player.x, y:player.y, r:80, alpha:1, ttl:420 });
     for(const e of enemies.slice()){
       const d = Math.hypot(e.x-player.x, e.y-player.y);
-      if(d < 90){
-        const dmg = Math.round(player.atk*2.2 + player.stats.str*3);
-        e.hp -= dmg; log(`Combo hit ${e.isBoss?'Boss':'Mob'} for ${dmg}.`);
-        if(e.hp <= 0) killEnemy(e);
-      }
+      if(d < 90){ const dmg = Math.round(player.atk*2.2 + player.stats.str*3); e.hp -= dmg; log(`Combo hit ${e.isBoss?'Boss':'Mob'} for ${dmg}.`); if(e.hp <= 0) killEnemy(e); }
     }
-    comboQueue = []; // reset
-  } else if(seq.endsWith('MHM')){ // magic-heavy-magic -> meteor small
+    comboQueue = [];
+  } else if(seq.endsWith('MHM')){
     attackFX.push({ type:'magicBurst', x:player.x + player.facing.x*100, y:player.y + player.facing.y*100, r:60, alpha:1, ttl:420 });
     for(const e of enemies.slice()){
       const d = Math.hypot(e.x - (player.x + player.facing.x*100), e.y - (player.y + player.facing.y*100));
@@ -345,36 +355,25 @@ function attemptCombo(){
     }
     comboQueue = [];
   }
-  // keep queue short
-  if(comboQueue.length > 6) comboQueue.shift();
+  if(comboQueue.length > 8) comboQueue.shift();
 }
 
-function killEnemy(e){
-  const idx = enemies.indexOf(e);
-  if(idx>=0) enemies.splice(idx,1);
-  const xpGain = Math.round(12 + e.lvl*8 + (e.isBoss?400:0));
-  player.xp += xpGain; player.gold += Math.round(6 + e.lvl*3 + (e.isBoss?60:0));
-  log(`Enemy defeated! +${xpGain} XP.`);
-  if(e.isBoss){ log('Boss slain — layer cleared'); currentLayer = layersFor(currentLevel) + 1; }
-  checkLevelUp();
-}
-
-// ---------- Projectiles & FX update ----------
+/* ---------- Projectiles & FX ---------- */
 function projectilesUpdate(dt){
   for(const p of projectiles.slice()){
     p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.ttl -= dt*1000;
     for(const e of enemies.slice()){
-      if(circleCollision(p.x,p.y,p.r,e.x,e.y,Math.max(e.w,e.h)/2)){
-        e.hp -= p.dmg; p.ttl = -1; attackFX.push({ type:'magicBurst', x:p.x, y:p.y, r:24, alpha:1, ttl:180 }); log(`Magic hit for ${p.dmg}.`); if(e.hp<=0) killEnemy(e);
-      }
+      if(circleCollision(p.x,p.y,p.r,e.x,e.y,Math.max(e.w,e.h)/2)){ e.hp -= p.dmg; p.ttl = -1; attackFX.push({ type:'magicBurst', x:p.x, y:p.y, r:24, alpha:1, ttl:180 }); log(`Magic hit for ${p.dmg}.`); if(e.hp<=0) killEnemy(e); }
     }
     for(const obj of worldObjects) if(rectCircleCollision(obj, p.x, p.y, p.r)){ p.ttl=-1; attackFX.push({type:'magicBurst', x:p.x, y:p.y, r:18, alpha:1, ttl:140}); }
   }
-  projectiles = projectiles.filter(p=>p.ttl>0);
+  projectiles = projectiles.filter(p => p.ttl > 0);
 }
-function attackFXUpdate(dt){ for(const fx of attackFX.slice()){ fx.ttl -= dt*1000; fx.alpha = Math.max(0, fx.ttl / 260); if(fx.ttl <= 0) attackFX.splice(attackFX.indexOf(fx),1); } }
+function attackFXUpdate(dt){
+  for(const fx of attackFX.slice()){ fx.ttl -= dt*1000; fx.alpha = Math.max(0, fx.ttl / 260); if(fx.ttl <= 0) attackFX.splice(attackFX.indexOf(fx),1); }
+}
 
-// ---------- Collision helpers ----------
+/* ---------- Collisions ---------- */
 function circleCollision(x1,y1,r1,x2,y2,r2){ return (Math.hypot(x2-x1,y2-y1) <= (r1 + r2)); }
 function rectCircleCollision(rect, cx, cy, cr){
   let rx = rect.x - (rect.w||0)/2 || rect.x;
@@ -386,47 +385,49 @@ function rectCircleCollision(rect, cx, cy, cr){
   return (dx*dx + dy*dy) <= cr*cr;
 }
 
-// ---------- Player death / game over ----------
+/* ---------- Kill / Level up / Game over ---------- */
+function killEnemy(e){
+  const idx = enemies.indexOf(e);
+  if(idx>=0) enemies.splice(idx,1);
+  const xpGain = Math.round(12 + e.lvl*8 + (e.isBoss?400:0));
+  player.xp += xpGain; player.gold += Math.round(6 + e.lvl*3 + (e.isBoss?60:0));
+  log(`Enemy defeated! +${xpGain} XP.`);
+  if(e.isBoss){ log('Boss slain — layer cleared'); currentLayer = layersFor(currentLevel) + 1; }
+  checkLevelUp();
+}
+function checkLevelUp(){ const xpForNext = 100 + (player.lvl - 1)*60; if(player.xp >= xpForNext){ player.xp -= xpForNext; player.lvl += 1; player.maxHp += 24; player.hp = player.maxHp; player.statPoints += 3; document.getElementById('playerLevel').textContent = player.lvl; log(`Leveled up! Now Lv ${player.lvl}. +3 stat points.`); } }
 function handleGameOver(){
   document.getElementById('gameOverOverlay').style.display = 'flex';
   document.getElementById('gameOverText').textContent = 'You died — Game Over';
-  // allow user to return to login
-  document.getElementById('goHome').onclick = ()=>{ auth.signOut().then(()=>{ window.location.href = 'login.html'; }); };
 }
+document.getElementById('respawnBtn').onclick = ()=>{ document.getElementById('gameOverOverlay').style.display='none'; player.hp = player.maxHp; player.gold = Math.max(0, player.gold - 20); player.x = W/2; player.y = H/2; log('Respawned — lost 20 gold.'); refreshUI(); };
+document.getElementById('logoutBtn').onclick = ()=>{ auth.signOut().then(()=>{ window.location.href='login.html'; }); };
 
-// ---------- Input handling ----------
-let keys = {}; window.addEventListener('keydown', e=>{ keys[e.key]=true; if(e.key===' '){ e.preventDefault(); playerMelee('light'); comboQueue.push('L'); attemptCombo(); } if(e.key.toLowerCase()==='q'){ toggleMode(); } if(e.key==='Enter'){ playerMelee('heavy'); comboQueue.push('H'); attemptCombo(); } if(e.key.toLowerCase()==='m'){ playerMagic(); comboQueue.push('M'); attemptCombo(); } }); window.addEventListener('keyup', e=>{ keys[e.key]=false; });
-
-canvas.addEventListener('click', e=>{
-  const rect = canvas.getBoundingClientRect();
-  const cx = (e.clientX - rect.left) * (W / rect.width);
-  const cy = (e.clientY - rect.top) * (H / rect.height);
-  const dx = cx - player.x, dy = cy - player.y; const L = Math.hypot(dx,dy)||1;
-  player.facing.x = dx/L; player.facing.y = dy/L;
-  if(player.mode==='sword'){ playerMelee('light'); comboQueue.push('L'); attemptCombo(); } else { playerMagic(); comboQueue.push('M'); attemptCombo(); }
+/* ---------- Input handling ---------- */
+let keys = {};
+window.addEventListener('keydown', (e)=>{ keys[e.key]=true;
+  if(e.key === ' '){ e.preventDefault(); playerMelee('light'); }
+  if(e.key === 'Enter'){ playerMelee('heavy'); }
+  if(e.key.toLowerCase() === 'm'){ playerMagic(); }
+  if(e.key.toLowerCase() === 'q'){ toggleMode(); }
 });
+window.addEventListener('keyup', (e)=>{ keys[e.key]=false; });
 
-// touch move / tap attack
-canvas.addEventListener('touchstart', (ev)=>{
-  const t = ev.touches[0]; const rect = canvas.getBoundingClientRect();
-  const x = (t.clientX - rect.left) * (W / rect.width), y = (t.clientY - rect.top) * (H / rect.height);
-  touchTarget = { x,y, t: now() };
-  setTimeout(()=>{ if(touchTarget && (now() - touchTarget.t < 220)){ const dx = touchTarget.x - player.x, dy = touchTarget.y - player.y; const L = Math.hypot(dx,dy)||1; player.facing.x = dx/L; player.facing.y = dy/L; if(player.mode==='sword'){ playerMelee('light'); comboQueue.push('L'); attemptCombo(); } else { playerMagic(); comboQueue.push('M'); attemptCombo(); } } }, 180);
-});
-canvas.addEventListener('touchmove', (ev)=>{ const t = ev.touches[0]; const rect = canvas.getBoundingClientRect(); const x=(t.clientX-rect.left)*(W/rect.width), y=(t.clientY-rect.top)*(H/rect.height); touchTarget={x,y,t:now()};});
+canvas.addEventListener('click', (e)=>{ const rect = canvas.getBoundingClientRect(); const cx = (e.clientX - rect.left) * (W / rect.width); const cy = (e.clientY - rect.top) * (H / rect.height); const dx = cx - player.x, dy = cy - player.y; const L = Math.hypot(dx,dy)||1; player.facing.x = dx/L; player.facing.y = dy/L; if(player.mode==='sword') playerMelee('light'); else playerMagic(); });
+canvas.addEventListener('touchstart', (ev)=>{ const t = ev.touches[0]; const rect = canvas.getBoundingClientRect(); const x = (t.clientX - rect.left) * (W / rect.width); const y = (t.clientY - rect.top) * (H / rect.height); touchTarget = { x,y, t: now() }; setTimeout(()=>{ if(touchTarget && (now() - touchTarget.t < 220)){ const dx = touchTarget.x - player.x, dy = touchTarget.y - player.y; const L = Math.hypot(dx,dy)||1; player.facing.x = dx/L; player.facing.y = dy/L; if(player.mode==='sword') playerMelee('light'); else playerMagic(); } }, 180); });
+canvas.addEventListener('touchmove', (ev)=>{ const t = ev.touches[0]; const rect = canvas.getBoundingClientRect(); const x=(t.clientX-rect.left)*(W/rect.width), y=(t.clientY-rect.top)*(H/rect.height); touchTarget={x,y,t:now()}; });
 canvas.addEventListener('touchend', ()=>{ touchTarget=null; });
 
-// UI buttons
-document.getElementById('attackLightBtn').onclick = ()=>{ playerMelee('light'); comboQueue.push('L'); attemptCombo(); };
-document.getElementById('attackHeavyBtn').onclick = ()=>{ playerMelee('heavy'); comboQueue.push('H'); attemptCombo(); };
-document.getElementById('attackMagicBtn').onclick = ()=>{ playerMagic(); comboQueue.push('M'); attemptCombo(); };
-document.getElementById('attackComboBtn').onclick = ()=>{ attemptCombo(); };
-document.getElementById('switchMode').onclick = toggleMode;
+/* UI buttons */
+document.getElementById('attackLightBtn').onclick = ()=>playerMelee('light');
+document.getElementById('attackHeavyBtn').onclick = ()=>playerMelee('heavy');
+document.getElementById('attackMagicBtn').onclick = ()=>playerMagic();
+document.getElementById('attackComboBtn').onclick = ()=>attemptCombo();
 
-// toggle mode
-function toggleMode(){ player.mode = (player.mode==='sword') ? 'magic' : 'sword'; document.getElementById('modeText').textContent = player.mode.charAt(0).toUpperCase()+player.mode.slice(1); log('Switched to '+player.mode); }
+/* Toggle mode */
+function toggleMode(){ player.mode = (player.mode === 'sword') ? 'magic' : 'sword'; document.getElementById('modeText') && (document.getElementById('modeText').textContent = player.mode.charAt(0).toUpperCase() + player.mode.slice(1)); log('Switched to ' + player.mode); }
 
-// ---------- Store & Inventory UI ----------
+/* ---------- Store & Inventory UI ---------- */
 function renderStore(){
   const root = document.getElementById('storeItems'); if(!root) return; root.innerHTML = '';
   STORE_ITEMS.forEach(it=>{
@@ -448,9 +449,9 @@ function renderInventory(){
 }
 function applyEquip(){ const wAtk = player.equip.weapon?.atk || 0; const wMag = player.equip.weapon?.mag || 0; const def = player.equip.armor?.def || 0; player.atk = 8 + wAtk; player.mag = 4 + wMag; player.stats.def = Math.max(1, (player.stats.def || 1) + def - (player.equip.armor?0:0)); }
 
-// ---------- Save / Load to Firebase ----------
+/* ---------- Save / Load to Firebase RTDB ---------- */
 async function saveToCloud(){
-  if(!auth.currentUser) { log('Not signed in - cannot save'); return; }
+  if(!auth.currentUser){ log('Not signed in.'); return; }
   const payload = {
     player:{
       x: player.x, y: player.y, hp: player.hp, maxHp: player.maxHp, atk: player.atk, mag: player.mag, spd: player.spd,
@@ -464,77 +465,51 @@ async function saveToCloud(){
     log('Saved to cloud.');
   }catch(err){ console.error(err); log('Cloud save failed.'); }
 }
-
 async function loadFromCloud(){
-  if(!auth.currentUser) return;
-  localUser = auth.currentUser;
-  document.getElementById('userName').textContent = localUser.displayName || 'Player';
-  if(localUser.photoURL){ document.getElementById('userPic').src = localUser.photoURL; document.getElementById('userPic').style.display=''; }
+  if(!auth.currentUser){ log('Not signed in'); initLocal(); return; }
   try{
-    const snap = await rtdb.ref('users/' + localUser.uid + '/save').once('value');
+    const snap = await rtdb.ref('users/' + auth.currentUser.uid + '/save').once('value');
     const data = snap.val();
-    if(!data){ // no save -> create default profile if absent
-      await rtdb.ref('users/' + localUser.uid).update({ name: localUser.displayName, email: localUser.email || '', photo: localUser.photoURL || '', createdAt: Date.now() });
-      // keep defaults
-      generateWorld(currentLayer); for(let i=0;i<4;i++) spawnEnemy(1,false); renderStore(); refreshUI();
-      log('No cloud save found. Using fresh game.');
-      return;
+    if(!data){ // no cloud save: create profile record if missing
+      await rtdb.ref('users/' + auth.currentUser.uid).update({ name: auth.currentUser.displayName, email: auth.currentUser.email || '', photo: auth.currentUser.photoURL || '', createdAt: Date.now() });
+      generateWorld(currentLayer); for(let i=0;i<4;i++) spawnEnemy(1,false); renderStore(); refreshUI(); log('No cloud save found. Starting fresh.'); return;
     }
-    // merge loaded player
+    // merge loaded player / world
     const p = data.player || {};
     Object.assign(player, {
-      x: p.x ?? player.x,
-      y: p.y ?? player.y,
-      hp: p.hp ?? player.hp,
-      maxHp: p.maxHp ?? player.maxHp,
-      atk: p.atk ?? player.atk,
-      mag: p.mag ?? player.mag,
-      spd: p.spd ?? player.spd,
-      lvl: p.lvl ?? player.lvl,
-      xp: p.xp ?? player.xp,
-      gold: p.gold ?? player.gold,
-      statPoints: p.statPoints ?? player.statPoints,
-      stats: p.stats ?? player.stats,
-      inventory: p.inventory ?? player.inventory,
-      equip: p.equip ?? player.equip,
-      mode: p.mode ?? player.mode
+      x: p.x ?? player.x, y: p.y ?? player.y, hp: p.hp ?? player.hp, maxHp: p.maxHp ?? player.maxHp,
+      atk: p.atk ?? player.atk, mag: p.mag ?? player.mag, spd: p.spd ?? player.spd, lvl: p.lvl ?? player.lvl,
+      xp: p.xp ?? player.xp, gold: p.gold ?? player.gold, statPoints: p.statPoints ?? player.statPoints,
+      stats: p.stats ?? player.stats, inventory: p.inventory ?? player.inventory, equip: p.equip ?? player.equip, mode: p.mode ?? player.mode
     });
-    // world
     currentLevel = data.world?.currentLevel ?? currentLevel;
     currentLayer = data.world?.currentLayer ?? currentLayer;
     enemies = data.world?.enemies ?? enemies;
     worldObjects = data.world?.worldObjects ?? worldObjects;
     applyEquip(); renderInventory(); renderStore(); refreshUI(); log('Loaded cloud save.');
-  }catch(err){ console.error(err); log('Failed to load cloud save.'); }
+  }catch(err){ console.error(err); log('Failed to load cloud save.'); initLocal(); }
 }
 
-// ---------- Game over handling ----------
-document.getElementById('goHome').onclick = ()=>{ auth.signOut().then(()=>{ window.location.href = 'login.html'; }); };
-
-// ---------- Main update & draw ----------
+/* ---------- Update & Draw loop ---------- */
+let touchTarget = null;
 function update(dt){
+  // movement
   let mvx=0,mvy=0;
-  if(keys['w']||keys['ArrowUp']) mvy -=1;
-  if(keys['s']||keys['ArrowDown']) mvy +=1;
-  if(keys['a']||keys['ArrowLeft']) mvx -=1;
-  if(keys['d']||keys['ArrowRight']) mvx +=1;
-  if(touchTarget){ const dx=touchTarget.x-player.x, dy=touchTarget.y-player.y; const L=Math.hypot(dx,dy)||1; player.x += (dx/L) * player.spd * dt; player.y += (dy/L) * player.spd * dt; } else { const len=Math.hypot(mvx,mvy)||1; if(mvx||mvy){ player.x += (mvx/len)*player.spd*dt; player.y += (mvy/len)*player.spd*dt; lastFacing.x = mvx/len; lastFacing.y = mvy/len; player.facing = {...lastFacing}; } }
-  // collisions with objects (player)
+  if(keys['w']||keys['ArrowUp']) mvy -= 1;
+  if(keys['s']||keys['ArrowDown']) mvy += 1;
+  if(keys['a']||keys['ArrowLeft']) mvx -= 1;
+  if(keys['d']||keys['ArrowRight']) mvx += 1;
+  if(touchTarget){ const dx = touchTarget.x - player.x, dy = touchTarget.y - player.y; const L = Math.hypot(dx,dy)||1; player.x += (dx/L) * player.spd * dt; player.y += (dy/L) * player.spd * dt; } else { const len = Math.hypot(mvx,mvy)||1; if(mvx||mvy){ player.x += (mvx/len) * player.spd * dt; player.y += (mvy/len) * player.spd * dt; player.facing.x = mvx/len; player.facing.y = mvy/len; lastFacing = {...player.facing}; } }
+  // collision with world objects (player)
   for(const obj of worldObjects){
     if(obj.type==='tree' || obj.type==='rock'){
       const rx = obj.x, ry = obj.y, rr = (obj.size/2) + Math.max(player.w,player.h)/2;
-      if(Math.hypot(player.x - rx, player.y - ry) < rr){
-        const dx = player.x - rx, dy = player.y - ry; const L=Math.hypot(dx,dy)||1;
-        player.x = rx + (dx/L) * rr; player.y = ry + (dy/L) * rr;
-      }
+      if(Math.hypot(player.x - rx, player.y - ry) < rr){ const dx=player.x-rx, dy=player.y-ry; const L=Math.hypot(dx,dy)||1; player.x = rx + (dx/L)*rr; player.y = ry + (dy/L)*rr; }
     } else if(obj.type==='house'){
       const rx = obj.x - obj.w/2, ry = obj.y, rw = obj.w, rh = obj.h;
       const closestX = clamp(player.x, rx, rx+rw); const closestY = clamp(player.y, ry, ry+rh);
       const dx = player.x - closestX, dy = player.y - closestY;
-      if(dx*dx + dy*dy < Math.pow(Math.max(player.w,player.h)/2,2)){
-        const pushX = dx||1, pushY = dy||1; const L=Math.hypot(pushX,pushY)||1;
-        player.x += (pushX/L)*6; player.y += (pushY/L)*6;
-      }
+      if(dx*dx + dy*dy < Math.pow(Math.max(player.w,player.h)/2,2)){ const pushX = dx||1, pushY = dy||1; const L=Math.hypot(pushX,pushY)||1; player.x += (pushX/L)*6; player.y += (pushY/L)*6; }
     }
   }
   // projectiles & fx
@@ -549,7 +524,7 @@ function update(dt){
     if(enemies.length < cap) spawnEnemy(currentLayer, false);
     lastSpawn = 0;
   }
-  // progression & boss spawn logic
+  // layer progression & boss spawn
   if(enemies.length === 0){
     currentLayer++;
     if(currentLayer > layersFor(currentLevel)){
@@ -557,7 +532,7 @@ function update(dt){
       log('Boss spawned for level ' + currentLevel);
     } else {
       generateWorld(currentLayer);
-      log('Entering layer '+currentLayer);
+      log(`Entering layer ${currentLayer}`);
     }
     document.getElementById('levelInfo').textContent = `Level ${currentLevel} • Layer ${currentLayer}/${layersFor(currentLevel)}`;
   }
@@ -565,7 +540,7 @@ function update(dt){
     currentLevel = Math.min(MAX_LEVEL, currentLevel + 1);
     currentLayer = 1;
     generateWorld(currentLayer);
-    log('Advanced to Level ' + currentLevel);
+    log(`Advanced to Level ${currentLevel}`);
     player.gold += 50 + Math.floor(currentLevel*8);
     document.getElementById('levelInfo').textContent = `Level ${currentLevel} • Layer ${currentLayer}/${layersFor(currentLevel)}`;
   }
@@ -575,14 +550,16 @@ function draw(){
   drawGround();
   for(const obj of worldObjects){ if(obj.type==='tree') drawTree(obj); else if(obj.type==='rock') drawRock(obj); else if(obj.type==='house') drawHouse(obj); }
   for(const e of enemies) drawEnemy(e);
-  drawPlayer(); for(const p of projectiles) drawProjectile(p); for(const fx of attackFX) drawAttackFX(fx);
+  drawPlayer();
+  for(const p of projectiles) drawProjectile(p);
+  for(const fx of attackFX) drawAttackFX(fx);
 }
 function gameLoop(ts){
   const dt = Math.min(0.05, (ts - lastTick)/1000);
   update(dt); draw(); lastTick = ts; requestAnimationFrame(gameLoop);
 }
 
-// ---------- UI & helpers ----------
+/* ---------- UI refresh & init ---------- */
 function refreshUI(){
   document.getElementById('hpText').textContent = `${Math.round(player.hp)}/${player.maxHp}`;
   document.getElementById('hpBar').style.width = `${Math.max(0,(player.hp/player.maxHp)*100)}%`;
@@ -590,7 +567,7 @@ function refreshUI(){
   document.getElementById('atkText').textContent = player.atk + equipAtk;
   document.getElementById('magText').textContent = player.mag + equipMag;
   document.getElementById('spdText').textContent = Math.round(player.spd + player.stats.spd * 4);
-  const xpForNext = 100 + (player.lvl - 1)*60;
+  const xpForNext = 100 + (player.lvl - 1) * 60;
   document.getElementById('xpText').textContent = `${Math.round(player.xp)}/${xpForNext}`;
   document.getElementById('playerLevel').textContent = player.lvl;
   document.getElementById('goldText').textContent = player.gold;
@@ -601,23 +578,28 @@ function refreshUI(){
   document.getElementById('statSpd').textContent = player.stats.spd;
   renderInventory(); renderStore();
 }
-
-// ---------- Init ----------
 function initLocal(){
   applyEquip(); generateWorld(currentLayer);
   for(let i=0;i<4;i++) spawnEnemy(1,false);
   renderStore(); renderInventory(); refreshUI();
-  if(window.innerWidth < 800) {/* show touch controls if implemented */ }
   requestAnimationFrame(gameLoop);
 }
 initLocal();
 setInterval(()=>{ refreshUI(); }, 700);
 
-// ---------- Cloud save/load buttons ----------
-document.getElementById('saveCloud').onclick = ()=>{ saveToCloud(); };
-document.getElementById('loadCloud').onclick = ()=>{ loadFromCloud(); };
+/* ---------- Expose save/load to UI ---------- */
+document.getElementById('saveCloud').onclick = saveToCloud;
+document.getElementById('loadCloud').onclick = loadFromCloud;
 
-// ---------- End of script ----------
+/* ---------- Helpers ---------- */
+function applyEquip(){ const wAtk = player.equip.weapon?.atk || 0; const wMag = player.equip.weapon?.mag || 0; const def = player.equip.armor?.def || 0; player.atk = 8 + wAtk; player.mag = 4 + wMag; player.stats.def = Math.max(1, (player.stats.def || 1) + def - (player.equip.armor?0:0)); }
+function initAfterAuth(){ if(auth.currentUser){ userNameEl.textContent = auth.currentUser.displayName || 'Player'; if(auth.currentUser.photoURL){ userPicEl.src = auth.currentUser.photoURL; userPicEl.style.display=''; } } }
+
+/* ---------- Auto-load from cloud if signed in ---------- */
+(async function tryAutoLoad(){
+  if(auth.currentUser) await loadFromCloud();
+})();
+
 </script>
 </body>
 </html>
